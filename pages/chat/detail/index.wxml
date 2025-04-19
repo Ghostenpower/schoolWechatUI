@@ -1,0 +1,45 @@
+<view class="chat-container">
+  <!-- 消息列表区域 -->
+  <scroll-view 
+    class="message-list" 
+    scroll-y="true" 
+    bindscrolltoupper="onLoadMore"
+    scroll-into-view="{{lastMessageId}}"
+  >
+    <block wx:for="{{messages}}" wx:key="timestamp">
+      <view class="message-item {{item.isSelf ? 'self' : 'other'}}">
+        <image 
+          class="avatar" 
+          src="{{item.isSelf ? '/images/default-avatar.png' : otherUser.avatar}}"
+          mode="aspectFill"
+        />
+        <view class="message-content">
+          <view class="message-bubble">
+            {{item.content}}
+          </view>
+          <view class="message-time">
+            {{item.timestamp}}
+          </view>
+        </view>
+      </view>
+    </block>
+  </scroll-view>
+
+  <!-- 输入区域 -->
+  <view class="input-area">
+    <input 
+      class="message-input" 
+      type="text" 
+      value="{{inputValue}}"
+      placeholder="输入消息..." 
+      bindinput="onInputChange"
+      confirm-type="send"
+      bindconfirm="onSendMessage"
+    />
+    <button 
+      class="send-button" 
+      bindtap="onSendMessage"
+      disabled="{{!inputValue.trim()}}"
+    >发送</button>
+  </view>
+</view> 

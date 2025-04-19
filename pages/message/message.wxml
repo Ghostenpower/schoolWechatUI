@@ -1,0 +1,20 @@
+<!--pages/message/message.wxml-->
+<view class="container">
+  <!-- 消息列表容器 -->
+  <view class="message-list">
+    <view 
+      class="message-item" 
+      wx:for="{{messages}}" 
+      wx:key="id"
+      bindtap="onTapMessage"
+      data-id="{{item.id}}"
+    >
+      <image class="avatar" src="{{item.avatar}}" mode="aspectFill" />
+      <view class="content">
+        <view class="name">{{item.name}}</view>
+        <view class="text">{{item.lastMessage}}</view>
+      </view>
+      <view class="time">{{item.time}}</view>
+    </view>
+  </view>
+</view> 

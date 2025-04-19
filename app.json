@@ -13,7 +13,9 @@
     "pages/address/list/index",
     "pages/address/add/index",
     "pages/feedback/feedback",
-    "pages/settings/settings"
+    "pages/settings/settings",
+    "pages/message/message",
+    "pages/chat/detail/index"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -37,6 +39,12 @@
         "text": "我的订单",
         "iconPath": "images/tabs/order.png",
         "selectedIconPath": "images/tabs/order_active.png"
+      },
+      {
+        "pagePath":"pages/message/message",
+        "text":"消息",
+        "iconPath":"images/tabs/message.png",
+        "selectedIconPath":"images/tabs/message_active.png"
       },
       {
         "pagePath": "pages/profile/profile",

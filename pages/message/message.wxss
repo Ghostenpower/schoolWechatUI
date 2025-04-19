@@ -1,0 +1,64 @@
+/* 消息页面样式 */
+
+/* 页面容器 */
+.container {
+  padding: 20rpx;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 消息列表 */
+.message-list {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 0 20rpx;
+}
+
+.message-item {
+  display: flex;
+  padding: 20rpx 0;
+  border-bottom: 1px solid #eee;
+}
+
+.message-item:last-child {
+  border-bottom: none;
+}
+
+.avatar {
+  width: 88rpx;
+  height: 88rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.avatar image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.name {
+  font-size: 32rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+  font-weight: 500;
+}
+
+.text {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.time {
+  font-size: 24rpx;
+  color: #999;
+} 
