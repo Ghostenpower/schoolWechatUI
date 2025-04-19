@@ -1,0 +1,42 @@
+{
+  "pages": [
+    "pages/tasks/tasks",
+    "pages/order/order",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#27BA9B",
+    "navigationBarTitleText": "校园跑腿",
+    "navigationBarTextStyle": "white"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#27BA9B",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/tasks/tasks",
+        "text": "任务大厅",
+        "iconPath": "images/tabs/task.png",
+        "selectedIconPath": "images/tabs/task_active.png"
+      },
+      {
+        "pagePath": "pages/order/order",
+        "text": "订单",
+        "iconPath": "images/tabs/order.png",
+        "selectedIconPath": "images/tabs/order_active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "images/tabs/my.png",
+        "selectedIconPath": "images/tabs/my_active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

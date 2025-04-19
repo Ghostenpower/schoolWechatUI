@@ -1,0 +1,46 @@
+/**app.wxss**/
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+.page {
+  padding: 20rpx;
+}
+
+.card {
+  background: #fff;
+  border-radius: 10rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
+}
+
+.btn-primary {
+  background: #27BA9B;
+  color: #fff;
+  border: none;
+  border-radius: 10rpx;
+}
+
+.text-primary {
+  color: #27BA9B;
+}
+
+.text-gray {
+  color: #999;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+} 
