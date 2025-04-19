@@ -7,7 +7,11 @@ Page({
    * 页面的初始数据
    */
   data: {
-    userInfo: {},
+    userInfo: {
+      avatarUrl: '',
+      nickName: '',
+      phone: ''
+    },
     hasUserInfo: false,
     stats: {
       orderCount: 0,
@@ -111,6 +115,40 @@ Page({
     const url = e.currentTarget.dataset.url
     wx.navigateTo({
       url: url
+    })
+  },
+
+  // 跳转到地址列表
+  onNavigateToAddress() {
+    wx.navigateTo({
+      url: '/pages/address/list/index'
+    })
+  },
+
+  onNavigateToWallet() {
+    wx.navigateTo({
+      url: '/pages/wallet/wallet'
+    })
+  },
+
+  // 跳转到个人资料页面
+  onNavigateToUserInfo() {
+    wx.navigateTo({
+      url: '/pages/user/info/index'
+    })
+  },
+
+  // 跳转到我的任务
+  onNavigateToMyTasks() {
+    wx.navigateTo({
+      url: '/pages/tasks/my/index'
+    })
+  },
+
+  // 跳转到我的订单
+  onNavigateToMyOrders() {
+    wx.navigateTo({
+      url: '/pages/order/list/index'
     })
   }
 })

@@ -1,0 +1,112 @@
+.container {
+  min-height: 100vh;
+  background-color: #f7f7f7;
+  padding: 30rpx;
+}
+
+/* 余额卡片样式 */
+.balance-card {
+  background: linear-gradient(135deg, #27BA9B 0%, #25ab8f 100%);
+  border-radius: 20rpx;
+  padding: 40rpx 30rpx;
+  color: #fff;
+  margin-bottom: 30rpx;
+}
+
+.balance-title {
+  font-size: 28rpx;
+  opacity: 0.9;
+}
+
+.balance-amount {
+  margin: 20rpx 0 40rpx;
+  display: flex;
+  align-items: baseline;
+}
+
+.currency {
+  font-size: 36rpx;
+  margin-right: 8rpx;
+}
+
+.number {
+  font-size: 60rpx;
+  font-weight: 500;
+}
+
+.balance-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.action-btn {
+  flex: 1;
+  height: 70rpx;
+  line-height: 70rpx;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 35rpx;
+  font-size: 28rpx;
+  color: #fff;
+  border: none;
+  padding: 0;
+}
+
+.action-btn::after {
+  border: none;
+}
+
+/* 交易记录样式 */
+.transactions {
+  background-color: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+}
+
+.transactions-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 30rpx;
+}
+
+.transaction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+}
+
+.transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.transaction-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.transaction-desc {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.transaction-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.transaction-amount {
+  font-size: 32rpx;
+  font-weight: 500;
+}
+
+.transaction-amount.income {
+  color: #27BA9B;
+}
+
+.transaction-amount.expense {
+  color: #ff4d4f;
+} 

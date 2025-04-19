@@ -89,10 +89,6 @@
   border-bottom: 2rpx solid #eee;
 }
 
-.menu-item:last-child {
-  border-bottom: none;
-}
-
 .menu-item-left {
   display: flex;
   align-items: center;

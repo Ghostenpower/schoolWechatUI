@@ -1,0 +1,246 @@
+/* pages/tasks/detail/detail.wxss */
+.container {
+  padding: 0 0 120rpx 0;
+  background: #f8f8f8;
+}
+
+/* 任务头部样式 */
+.task-header {
+  background: #fff;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.task-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.task-reward {
+  margin-bottom: 20rpx;
+}
+
+.currency {
+  font-size: 32rpx;
+  color: #27BA9B;
+}
+
+.number {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #27BA9B;
+  margin-left: 4rpx;
+}
+
+.task-status {
+  display: inline-block;
+  padding: 8rpx 20rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+}
+
+.task-status.pending {
+  background: rgba(39, 186, 155, 0.1);
+  color: #27BA9B;
+}
+
+.task-status.accepted {
+  background: rgba(39, 186, 155, 0.2);
+  color: #27BA9B;
+}
+
+.task-status.completed {
+  background: rgba(39, 186, 155, 0.3);
+  color: #27BA9B;
+}
+
+/* 任务详情部分样式 */
+.task-section {
+  background: #fff;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 30rpx;
+  position: relative;
+  padding-left: 20rpx;
+}
+
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6rpx;
+  height: 30rpx;
+  background: #27BA9B;
+  border-radius: 3rpx;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 20rpx;
+  line-height: 1.6;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  width: 160rpx;
+  color: #666;
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.value {
+  flex: 1;
+  color: #333;
+  font-size: 28rpx;
+}
+
+.value.code {
+  color: #27BA9B;
+  margin-right: 20rpx;
+}
+
+.copy-hint {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 注意事项列表样式 */
+.requirements-list {
+  padding: 0 20rpx;
+}
+
+.requirement-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16rpx;
+}
+
+.requirement-item:last-child {
+  margin-bottom: 0;
+}
+
+.dot {
+  margin-right: 10rpx;
+  color: #27BA9B;
+}
+
+.text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* 用户信息样式 */
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+}
+
+.user-details {
+  flex: 1;
+}
+
+.name {
+  font-size: 30rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
+.time {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+}
+
+.contact-btn {
+  padding: 12rpx 30rpx;
+  background: #27BA9B;
+  color: #fff;
+  font-size: 26rpx;
+  border-radius: 30rpx;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.contact-btn::after {
+  border: none;
+}
+
+/* 底部操作栏样式 */
+.footer-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 20rpx 30rpx;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.action-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  margin: 0;
+}
+
+.action-btn::after {
+  border: none;
+}
+
+.action-btn.primary {
+  background: #27BA9B;
+  color: #fff;
+}
+
+.action-btn.primary:active {
+  opacity: 0.9;
+}
+
+/* 加载状态样式 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f8f8f8;
+}
+
+.loading {
+  width: 64rpx;
+  height: 64rpx;
+  border: 6rpx solid #f3f3f3;
+  border-top: 6rpx solid #27BA9B;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+} 

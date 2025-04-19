@@ -1,2 +1,68 @@
 <!--pages/order/order.wxml-->
-<text>pages/order/order.wxml</text>
+<view class="container">
+  <!-- 顶部标签栏 -->
+  <view class="tabs">
+    <view 
+      wx:for="{{tabs}}" 
+      wx:key="*this" 
+      class="tab {{activeTab === index ? 'active' : ''}}"
+      bindtap="onTabChange"
+      data-index="{{index}}"
+    >
+      {{item}}
+    </view>
+  </view>
+
+  <!-- 订单列表 -->
+  <view class="order-list">
+    <view class="order-item" wx:for="{{orders}}" wx:key="id">
+      <view class="order-header">
+        <view class="order-type">{{item.title}}</view>
+        <view class="order-status {{item.status}}">{{getStatusText(item.status)}}</view>
+      </view>
+
+      <view class="order-content" bindtap="onViewOrder" data-id="{{item.id}}">
+        <view class="info-row">
+          <image class="icon" src="/images/icons/location.png" mode="aspectFit"/>
+          <text class="label">取件地点：</text>
+          <text class="value">{{item.details.pickupLocation}}</text>
+        </view>
+        <view class="info-row">
+          <image class="icon" src="/images/icons/destination.png" mode="aspectFit"/>
+          <text class="label">送达地点：</text>
+          <text class="value">{{item.details.deliveryLocation}}</text>
+        </view>
+        <view class="info-row">
+          <image class="icon" src="/images/icons/time.png" mode="aspectFit"/>
+          <text class="label">期望时间：</text>
+          <text class="value">{{item.details.expectedTime}}</text>
+        </view>
+        <block wx:if="{{item.status === 'processing'}}">
+          <view class="courier-info">
+            <image class="courier-avatar" src="/images/default-avatar.png" mode="aspectFill"/>
+            <view class="courier-details">
+              <text class="courier-name">{{item.details.courierName}}</text>
+              <text class="courier-phone">{{item.details.courierPhone}}</text>
+            </view>
+          </view>
+        </block>
+      </view>
+
+      <view class="order-footer">
+        <view class="amount">
+          <text>订单金额：</text>
+          <text class="currency">¥</text>
+          <text class="number">{{formatAmount(item.amount)}}</text>
+        </view>
+        <view class="actions">
+          <block wx:if="{{item.status === 'pending_payment'}}">
+            <button class="action-btn primary" bindtap="onPayOrder" data-id="{{item.id}}">立即支付</button>
+          </block>
+          <block wx:if="{{item.status === 'processing'}}">
+            <button class="action-btn" bindtap="onConfirmComplete" data-id="{{item.id}}">确认完成</button>
+          </block>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

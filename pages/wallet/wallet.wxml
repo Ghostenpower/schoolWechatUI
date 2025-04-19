@@ -1,0 +1,32 @@
+<view class="container">
+  <!-- 余额卡片 -->
+  <view class="balance-card">
+    <view class="balance-title">我的余额</view>
+    <view class="balance-amount">
+      <text class="currency">¥</text>
+      <text class="number">{{balance}}</text>
+    </view>
+    <view class="balance-actions">
+      <button class="action-btn" bindtap="onRecharge">充值</button>
+      <button class="action-btn" bindtap="onWithdraw">提现</button>
+    </view>
+  </view>
+
+  <!-- 交易记录 -->
+  <view class="transactions">
+    <view class="transactions-title">交易记录</view>
+    <view class="transaction-list">
+      <block wx:for="{{transactions}}" wx:key="id">
+        <view class="transaction-item">
+          <view class="transaction-info">
+            <text class="transaction-desc">{{item.desc}}</text>
+            <text class="transaction-time">{{item.time}}</text>
+          </view>
+          <view class="transaction-amount {{item.amount >= 0 ? 'income' : 'expense'}}">
+            {{item.amount >= 0 ? '+' : ''}}{{formatAmount(item.amount)}}
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+</view> 

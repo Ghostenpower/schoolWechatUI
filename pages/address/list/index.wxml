@@ -1,0 +1,32 @@
+<view class="container">
+  <!-- 地址列表 -->
+  <view class="address-list" wx:if="{{addressList.length > 0}}">
+    <view class="address-item" wx:for="{{addressList}}" wx:key="id" bindtap="onSelectAddress" data-item="{{item}}">
+      <view class="address-info">
+        <view class="user-info">
+          <text class="name">{{item.name}}</text>
+          <text class="phone">{{item.phone}}</text>
+          <text class="tag" wx:if="{{item.tag}}">{{item.tag}}</text>
+        </view>
+        <view class="location">{{item.location}}{{item.detail}}</view>
+      </view>
+      <view class="address-edit" catchtap="onEditAddress" data-id="{{item.id}}">
+        <text class="iconfont icon-edit"></text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:else>
+    <image class="empty-image" src="/images/empty-address.png" mode="aspectFit"></image>
+    <text class="empty-text">暂无收货地址</text>
+  </view>
+
+  <!-- 底部添加按钮 -->
+  <view class="safe-area-bottom">
+    <view class="btn btn-primary" bindtap="onAddAddress">
+      <text class="iconfont icon-add"></text>
+      <text>新建收货地址</text>
+    </view>
+  </view>
+</view> 

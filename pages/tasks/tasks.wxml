@@ -1,4 +1,81 @@
 <!--pages/tasks/tasks.wxml-->
 <view class="container">
-  
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input-wrap">
+      <image class="search-icon" src="/images/icons/search.png" mode="aspectFit"/>
+      <input 
+        class="search-input" 
+        placeholder="搜索任务" 
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+      />
+    </view>
+  </view>
+
+  <!-- 顶部标签栏 -->
+  <view class="tabs">
+    <view 
+      wx:for="{{tabs}}" 
+      wx:key="*this" 
+      class="tab {{activeTab === index ? 'active' : ''}}"
+      bindtap="onTabChange"
+      data-index="{{index}}"
+    >
+      {{item}}
+    </view>
+  </view>
+
+  <!-- 任务列表 -->
+  <view class="task-list">
+    <view class="task-item" wx:for="{{tasks}}" wx:key="id">
+      <view class="task-header" bindtap="onViewTask" data-id="{{item.id}}">
+        <image class="publisher-avatar" src="{{item.publisher.avatar}}" mode="aspectFill"/>
+        <text class="publisher-name">{{item.publisher.nickname}}</text>
+        <text class="task-time">{{item.createTime}}</text>
+      </view>
+      <view class="task-content" bindtap="onViewTask" data-id="{{item.id}}">
+        <view class="task-title">{{item.title}}</view>
+        <view class="task-desc">{{item.description}}</view>
+        <view class="task-info">
+          <view class="info-item">
+            <image class="icon" src="/images/icons/location.png" mode="aspectFit"/>
+            <text>{{item.location}}</text>
+          </view>
+          <view class="info-item">
+            <image class="icon" src="/images/icons/destination.png" mode="aspectFit"/>
+            <text>{{item.destination}}</text>
+          </view>
+          <view class="info-item">
+            <image class="icon" src="/images/icons/time.png" mode="aspectFit"/>
+            <text>{{item.deadline}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="task-footer">
+        <view class="task-footer-left">
+          <text class="task-status {{item.status}}">{{item.status === 'pending' ? '待接单' : '已接单'}}</text>
+          <view class="reward">
+            <text class="currency">¥</text>
+            <text class="amount">{{formatAmount(item.reward)}}</text>
+          </view>
+        </view>
+        <button 
+          class="accept-btn {{item.status !== 'pending' ? 'disabled' : ''}}" 
+          bindtap="onAcceptTask" 
+          data-id="{{item.id}}"
+          disabled="{{item.status !== 'pending'}}"
+        >
+          {{item.status === 'pending' ? '接单' : '已被接单'}}
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 发布按钮 -->
+  <view class="publish-btn" bindtap="onPublishTask">
+    <image class="icon" src="/images/icons/plus.png" mode="aspectFit"/>
+    <text>发布任务</text>
+  </view>
 </view> 
