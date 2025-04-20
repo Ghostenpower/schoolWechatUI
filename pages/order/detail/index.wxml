@@ -1,129 +1,147 @@
 <!--pages/order/detail/index.wxml-->
 <view class="container">
-  <block wx:if="{{loading}}">
-    <view class="loading-container">
-      <view class="loading"></view>
-    </view>
-  </block>
-  <block wx:elif="{{order}}">
-    <!-- 订单状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading"></view>
+    <view class="loading-text">加载中...</view>
+  </view>
+
+  <block wx:else>
+    <!-- 订单基本信息 -->
     <view class="order-header">
-      <view class="order-status {{order.status}}">
-        <text wx:if="{{order.status === 'processing'}}">进行中</text>
-        <text wx:elif="{{order.status === 'completed'}}">已完成</text>
-        <text wx:elif="{{order.status === 'cancelled'}}">已取消</text>
+      <view class="title">{{taskInfo.title || '未命名任务'}}</view>
+      <view class="status-group">
+        <view class="status-tag order-status {{orderInfo.orderStatus === 1 ? 'pending' : orderInfo.orderStatus === 2 ? 'completed' : 'cancelled'}}">
+          {{orderStatusMap[orderInfo.orderStatus] || '未知状态'}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 任务详情 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">任务详情</text>
+      </view>
+      <view class="section-content">
+        <view class="info-row">
+          <text class="label">取件地点：</text>
+          <text class="value">{{taskInfo.pickupLocation || '暂无'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">送达地点：</text>
+          <text class="value">{{taskInfo.deliveryLocation || '暂无'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">截止时间：</text>
+          <text class="value">{{taskInfo.deadlineFormatted || '暂无'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">任务类型：</text>
+          <text class="value">{{taskInfo.taskType === 0 ? '外卖代取' : taskInfo.taskType === 1 ? '快递代取' : '其他'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">任务报酬：</text>
+          <text class="value price">¥ {{taskInfo.price || 0}}</text>
+        </view>
+        <view class="info-row" wx:if="{{taskInfo.remark}}">
+          <text class="label">任务备注：</text>
+          <text class="value">{{taskInfo.remark}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">任务描述：</text>
+          <text class="value">{{taskInfo.description || '暂无描述'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 任务发布者信息 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">发布者信息</text>
+      </view>
+      <view class="section-content">
+        <view class="user-card">
+          <image class="avatar" src="{{customerInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+          <view class="user-info">
+            <text class="username">{{customerInfo.username || '未知用户'}}</text>
+            <text class="user-phone" wx:if="{{customerInfo.phone}}">{{customerInfo.phone}}</text>
+          </view>
+          <button class="action-btn call-btn" bindtap="onCallPhone" data-phone="{{customerInfo.phone}}" wx:if="{{customerInfo.phone}}">
+            <text class="icon">📞</text> 拨打电话
+          </button>
+        </view>
       </view>
     </view>
 
     <!-- 订单信息 -->
-    <view class="order-section">
-      <view class="section-title">订单信息</view>
-      <view class="info-row">
-        <text class="label">订单编号：</text>
-        <text class="value code" bindtap="onCopyOrderNo">{{order.orderNo}}</text>
-        <text class="copy-hint">点击复制</text>
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">订单信息</text>
       </view>
-      <view class="info-row">
-        <text class="label">创建时间：</text>
-        <text class="value">{{order.acceptTime}}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">支付方式：</text>
-        <text class="value">{{order.paymentMethod}}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">订单金额：</text>
-        <text class="value price">¥{{formatAmount(order.totalAmount)}}</text>
-      </view>
-    </view>
-
-    <!-- 任务信息 -->
-    <view class="order-section">
-      <view class="section-title">任务信息</view>
-      <view class="info-row">
-        <text class="label">任务类型：</text>
-        <text class="value">{{order.title}}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">任务描述：</text>
-        <text class="value">{{order.description}}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">取件地点：</text>
-        <text class="value">{{order.location}}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">送达地点：</text>
-        <text class="value">{{order.destination}}</text>
-      </view>
-    </view>
-
-    <!-- 快递信息 -->
-    <view class="order-section">
-      <view class="section-title">快递信息</view>
-      <view class="info-row">
-        <text class="label">取件码：</text>
-        <text class="value code" bindtap="onCopyCode">{{order.packageInfo.code}}</text>
-        <text class="copy-hint">点击复制</text>
-      </view>
-      <view class="info-row">
-        <text class="label">包裹大小：</text>
-        <text class="value">{{order.packageInfo.size}}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">重量：</text>
-        <text class="value">{{order.packageInfo.weight}}</text>
-      </view>
-    </view>
-
-    <!-- 注意事项 -->
-    <view class="order-section">
-      <view class="section-title">注意事项</view>
-      <view class="requirements-list">
-        <view class="requirement-item" wx:for="{{order.requirements}}" wx:key="*this">
-          <text class="dot">•</text>
-          <text class="text">{{item}}</text>
+      <view class="section-content">
+        <view class="info-row">
+          <text class="label">订单号：</text>
+          <text class="value">{{orderInfo.orderId || '暂无'}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">接单时间：</text>
+          <text class="value">{{orderInfo.acceptTimeFormatted || '暂无'}}</text>
+        </view>
+        <view class="info-row" wx:if="{{orderInfo.completionTime}}">
+          <text class="label">完成时间：</text>
+          <text class="value">{{orderInfo.completionTimeFormatted || '暂无'}}</text>
+        </view>
+        <view class="info-row" wx:if="{{orderInfo.cancelTime}}">
+          <text class="label">取消时间：</text>
+          <text class="value">{{orderInfo.cancelTimeFormatted || '暂无'}}</text>
+        </view>
+        <view class="info-row" wx:if="{{orderInfo.cancelReason}}">
+          <text class="label">取消原因：</text>
+          <text class="value">{{orderInfo.cancelReason}}</text>
         </view>
       </view>
     </view>
 
-    <!-- 用户信息 -->
-    <view class="order-section">
-      <view class="section-title">下单用户</view>
-      <view class="user-info">
-        <image class="avatar" src="{{order.user.avatar}}" mode="aspectFill"/>
-        <view class="user-details">
-          <text class="name">{{order.user.name}}</text>
-        </view>
-        <button class="contact-btn" bindtap="onContactUser">联系用户</button>
-      </view>
+    <!-- 状态标识 -->
+    <view class="status-tips" wx:if="{{orderInfo.orderStatus === 2}}">
+      <view class="status-icon completed">✓</view>
+      <view class="status-text">订单已完成</view>
+      <view class="status-desc">感谢您的使用，期待再次为您服务</view>
     </view>
 
-    <!-- 订单状态时间线 -->
-    <view class="order-section">
-      <view class="section-title">订单进度</view>
-      <view class="timeline">
-        <view class="timeline-item">
-          <view class="time">{{order.acceptTime}}</view>
-          <view class="content">订单创建</view>
-        </view>
-        <view class="timeline-item" wx:if="{{order.completedTime}}">
-          <view class="time">{{order.completedTime}}</view>
-          <view class="content">订单完成</view>
-        </view>
-        <view class="timeline-item" wx:if="{{order.cancelledTime}}">
-          <view class="time">{{order.cancelledTime}}</view>
-          <view class="content">订单取消</view>
-          <view class="reason">{{order.cancelReason}}</view>
-        </view>
-      </view>
+    <view class="status-tips" wx:if="{{orderInfo.orderStatus === 3}}">
+      <view class="status-icon cancelled">✕</view>
+      <view class="status-text">订单已取消</view>
+      <view class="status-desc">{{orderInfo.cancelReason || '用户主动取消'}}</view>
     </view>
 
-    <!-- 底部操作栏 -->
-    <view class="footer-actions">
-      <block wx:if="{{order.status === 'processing'}}">
-        <button class="action-btn primary" bindtap="onConfirmComplete">确认完成</button>
-      </block>
+    <!-- 操作按钮 -->
+    <view class="bottom-actions" wx:if="{{orderInfo.orderStatus === 1}}">
+      <button 
+        class="btn primary-btn" 
+        bindtap="onConfirmComplete"
+        hover-class="btn-hover"
+      >
+        <text class="btn-icon">✓</text> 确认完成
+      </button>
+
+      <button 
+        class="btn cancel-btn" 
+        bindtap="onCancelOrder"
+        hover-class="btn-hover"
+      >
+        <text class="btn-icon">✕</text> 取消订单
+      </button>
+    </view>
+
+    <!-- 订单已完成/取消时的底部按钮 -->
+    <view class="bottom-actions" wx:if="{{orderInfo.orderStatus !== 1}}">
+      <button 
+        class="btn back-btn" 
+        bindtap="onBackToList"
+        hover-class="btn-hover"
+      >
+        返回订单列表
+      </button>
     </view>
   </block>
 </view> 

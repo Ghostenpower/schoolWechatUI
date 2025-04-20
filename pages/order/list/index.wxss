@@ -1,1 +1,145 @@
 /* 样式待设计 */ 
+
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 20rpx;
+}
+
+.order-list {
+  padding-bottom: 20rpx;
+}
+
+.order-item {
+  background-color: #ffffff;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.task-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.status-group {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.task-status {
+  font-size: 24rpx;
+  color: #666;
+  padding: 4rpx 12rpx;
+  background-color: #f5f5f5;
+  border-radius: 16rpx;
+}
+
+.order-status {
+  font-size: 24rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 16rpx;
+  min-width: 100rpx;
+  text-align: center;
+}
+
+.order-status.pending {
+  color: #07c160;
+  background-color: rgba(7, 193, 96, 0.1);
+}
+
+.order-status.completed {
+  color: #999;
+  background-color: #f5f5f5;
+}
+
+.order-status.cancelled {
+  color: #ff4d4f;
+  background-color: rgba(255, 77, 79, 0.1);
+}
+
+.order-content {
+  border-top: 1rpx solid #eee;
+  border-bottom: 1rpx solid #eee;
+  padding: 20rpx 0;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 16rpx;
+  font-size: 28rpx;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  color: #666;
+  width: 140rpx;
+  flex-shrink: 0;
+}
+
+.value {
+  color: #333;
+  flex: 1;
+}
+
+.description {
+  font-size: 28rpx;
+  color: #666;
+  margin-top: 16rpx;
+  line-height: 1.5;
+}
+
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  margin-right: 12rpx;
+}
+
+.name {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.loading, .no-more, .empty {
+  text-align: center;
+  padding: 30rpx;
+  color: #999;
+  font-size: 26rpx;
+}
+
+.empty {
+  padding-top: 200rpx;
+} 
