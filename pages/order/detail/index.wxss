@@ -142,6 +142,11 @@
   color: #333;
 }
 
+.value.clickable {
+  color: #1890ff;
+  text-decoration: underline;
+}
+
 .price {
   color: #f5222d;
   font-weight: 500;

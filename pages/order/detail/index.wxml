@@ -24,11 +24,11 @@
       <view class="section-content">
         <view class="info-row">
           <text class="label">取件地点：</text>
-          <text class="value">{{taskInfo.pickupLocation || '暂无'}}</text>
+          <text class="value clickable" bindtap="onViewPickupLocation">{{taskInfo.pickupLocation || '暂无'}}</text>
         </view>
         <view class="info-row">
           <text class="label">送达地点：</text>
-          <text class="value">{{taskInfo.deliveryLocation || '暂无'}}</text>
+          <text class="value clickable" bindtap="onViewDeliveryLocation">{{taskInfo.deliveryLocation || '暂无'}}</text>
         </view>
         <view class="info-row">
           <text class="label">截止时间：</text>

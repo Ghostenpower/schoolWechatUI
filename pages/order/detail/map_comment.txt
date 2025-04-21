@@ -1,0 +1,16 @@
+//
+添加腾讯地图API
+DKKBZ-BBOEC-YTO2E-AFVSD-Z6U36-5XFMG
+
+微信地图坐标系说明：
+1. wx.openLocation - 打开地图 - 必须使用火星坐标系(GCJ-02)
+2. wx.getLocation - 获取位置 - 通过设置 type: 'gcj02' 获取火星坐标
+3. WGS-84 - GPS原始坐标系
+4. GCJ-02 - 国测局坐标系(火星坐标系)，中国标准，微信和高德地图使用
+5. BD-09 - 百度坐标系，百度地图使用
+
+注意事项：
+- 在使用 wx.openLocation 之前，确保坐标是 GCJ-02 格式
+- 如果坐标来源是 GPS 等设备，需要先转换为 GCJ-02 才能正确显示
+- 使用 wx.getLocation 接口时，应设置 type: 'gcj02'
+- 本系统的坐标将在后台存储时就确保是 GCJ-02 格式 

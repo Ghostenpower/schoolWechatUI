@@ -1,6 +1,7 @@
 Page({
   /**
    * 页面的初始数据
+   * 存储订单详情页面的状态和数据
    */
   data: {
     orderId: null,
@@ -139,6 +140,21 @@ Page({
           if (taskData.deadline) {
             taskData.deadlineFormatted = this.formatTime(taskData.deadline);
             console.log('格式化截止时间:', taskData.deadline, '->', taskData.deadlineFormatted);
+          }
+          
+          // 处理坐标信息 - 坐标格式为"经度,纬度"
+          if (taskData.pickupCoordinates) {
+            const [longitude, latitude] = taskData.pickupCoordinates.split(',').map(coord => parseFloat(coord));
+            taskData.pickupLongitude = longitude;
+            taskData.pickupLatitude = latitude;
+            console.log('取件坐标(经度,纬度):', longitude, latitude);
+          }
+          
+          if (taskData.deliveryCoordinates) {
+            const [longitude, latitude] = taskData.deliveryCoordinates.split(',').map(coord => parseFloat(coord));
+            taskData.deliveryLongitude = longitude;
+            taskData.deliveryLatitude = latitude;
+            console.log('送达坐标(经度,纬度):', longitude, latitude);
           }
           
           this.setData({
@@ -549,5 +565,82 @@ Page({
     // 下拉刷新，重新加载数据
     this.loadOrderDetail(this.data.orderId);
     wx.stopPullDownRefresh();
+  },
+
+  /**
+   * 跳转到地图查看取件位置
+   */
+  onViewPickupLocation: function() {
+    const { taskInfo } = this.data;
+    if (taskInfo.pickupLatitude && taskInfo.pickupLongitude) {
+      console.log('打开取件位置地图，坐标:', taskInfo.pickupLatitude, taskInfo.pickupLongitude, '类型:', typeof taskInfo.pickupLatitude, typeof taskInfo.pickupLongitude);
+      
+      // 确保经纬度是数字类型
+      const latitude = Number(taskInfo.pickupLatitude);
+      const longitude = Number(taskInfo.pickupLongitude);
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        wx.showToast({
+          title: '坐标格式错误',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      // 使用微信自带的地图功能打开位置
+      // 注意: wx.openLocation 要求使用火星坐标系(GCJ-02)，与 wx.getLocation 的 type: 'gcj02' 对应
+      console.log('打开取件位置地图，坐标:', latitude, longitude);
+      wx.openLocation({
+        latitude: latitude,
+        longitude: longitude,
+        name: '取件地点',
+        address: taskInfo.pickupLocation || '未知地址',
+        scale: 18,
+        type: 'gcj02'
+      });
+    } else {
+      wx.showToast({
+        title: '无位置信息',
+        icon: 'none'
+      });
+    }
+  },
+
+  /**
+   * 跳转到地图查看送达位置
+   */
+  onViewDeliveryLocation: function() {
+    const { taskInfo } = this.data;
+    if (taskInfo.deliveryLatitude && taskInfo.deliveryLongitude) {
+      console.log('打开送达位置地图，坐标:', taskInfo.deliveryLatitude, taskInfo.deliveryLongitude, '类型:', typeof taskInfo.deliveryLatitude, typeof taskInfo.deliveryLongitude);
+      
+      // 确保经纬度是数字类型
+      const latitude = Number(taskInfo.deliveryLatitude);
+      const longitude = Number(taskInfo.deliveryLongitude);
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        wx.showToast({
+          title: '坐标格式错误',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      // 使用微信自带的地图功能打开位置
+      // 注意: wx.openLocation 要求使用火星坐标系(GCJ-02)，与 wx.getLocation 的 type: 'gcj02' 对应
+      console.log('打开送达位置地图，坐标:', latitude, longitude);
+      wx.openLocation({
+        latitude: latitude,
+        longitude: longitude,
+        name: '送达地点',
+        address: taskInfo.deliveryLocation || '未知地址',
+        scale: 18
+      });
+    } else {
+      wx.showToast({
+        title: '无位置信息',
+        icon: 'none'
+      });
+    }
   }
-}) 
+}) // 使用微信原生地图API - 需要火星坐标系(GCJ-02)
