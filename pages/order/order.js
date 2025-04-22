@@ -33,6 +33,8 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
+    // 初始化滚动位置记录
+    this.savedScrollPosition = 0;
     this.loadOrders();
   },
 
@@ -47,15 +49,38 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow() {
-    // 每次显示页面时刷新数据
-    this.refreshOrders();
+    // 如果是从订单详情页返回，恢复之前保存的滚动位置
+    const pages = getCurrentPages();
+    if (pages.length > 1 && pages[pages.length - 1].route.includes('order/order')) {
+      console.log('从其他页面返回订单列表，恢复滚动位置');
+      // 如果有保存的滚动位置，延迟一小段时间再恢复
+      if (this.savedScrollPosition > 0) {
+        setTimeout(() => {
+          console.log('恢复保存的滚动位置:', this.savedScrollPosition);
+          wx.pageScrollTo({
+            scrollTop: this.savedScrollPosition,
+            duration: 0
+          });
+        }, 300);
+      }
+    } else {
+      // 第一次加载页面时刷新数据
+      this.refreshOrders();
+    }
   },
 
   /**
    * 生命周期函数--监听页面隐藏
    */
   onHide() {
-
+    // 在页面隐藏时保存当前滚动位置
+    wx.createSelectorQuery()
+      .selectViewport()
+      .scrollOffset(res => {
+        this.savedScrollPosition = res.scrollTop || 0;
+        console.log('页面隐藏时保存滚动位置:', this.savedScrollPosition);
+      })
+      .exec();
   },
 
   /**
@@ -106,6 +131,16 @@ Page({
   // 查看订单详情
   onViewOrder(e) {
     const id = e.currentTarget.dataset.id;
+    
+    // 保存当前滚动位置，供返回时使用
+    wx.createSelectorQuery()
+      .selectViewport()
+      .scrollOffset(res => {
+        this.savedScrollPosition = res.scrollTop || 0;
+        console.log('进入详情页前保存滚动位置:', this.savedScrollPosition);
+      })
+      .exec();
+    
     wx.navigateTo({
       url: `/pages/order/detail/index?id=${id}`
     });
@@ -113,35 +148,107 @@ Page({
 
   // 确认完成
   onConfirmComplete(e) {
+    // 不使用e.stopPropagation()，微信小程序中通过catchtap已经阻止了冒泡
+    
     const id = e.currentTarget.dataset.id;
+    
     wx.showModal({
       title: '确认完成',
       content: '确认订单已完成吗？',
+      confirmText: '确认完成',
+      confirmColor: '#07c160',
       success: (res) => {
         if (res.confirm) {
-          // TODO: 调用完成订单接口
+          // 显示加载中
+          wx.showLoading({
+            title: '提交中...',
+            mask: true
+          });
+          
+          // 获取订单ID
+          const orderId = Number(id);
+          
+          console.log('正在提交完成订单请求，orderId:', orderId);
+          
+          // 按照API文档格式发送请求
           wx.request({
-            url: 'YOUR_API_BASE_URL/api/orders/complete',
+            url: 'http://localhost:8051/api/orders/complete',
             method: 'POST',
-            data: { orderId: id },
+            header: {
+              'Content-Type': 'application/json',
+              'token': wx.getStorageSync('token')
+            },
+            data: orderId, // 直接发送订单ID
             success: (res) => {
-              if (res.data.code === 1) {
+              console.log('完成订单API响应:', res.data);
+              
+              // 隐藏加载提示
+              wx.hideLoading();
+              
+              if (res.data.code === 1) { // 后端返回code为1表示成功
+                // 本地更新操作的订单状态，避免重新加载整个列表
+                this.updateLocalOrderStatus(orderId, 2); // 2表示已完成
+                
+                // 展示成功动画
                 wx.showToast({
                   title: '订单已完成',
-                  icon: 'success'
+                  icon: 'success',
+                  duration: 2000
                 });
-                this.refreshOrders();
               } else {
                 wx.showToast({
                   title: res.data.msg || '操作失败',
-                  icon: 'none'
+                  icon: 'none',
+                  duration: 2000
                 });
               }
+            },
+            fail: (err) => {
+              console.error('完成订单请求失败:', err);
+              wx.hideLoading();
+              wx.showToast({
+                title: '网络错误，请重试',
+                icon: 'none',
+                duration: 2000
+              });
             }
           });
         }
       }
     });
+  },
+  
+  // 本地更新订单状态，而不是重新加载整个列表
+  updateLocalOrderStatus(orderId, newStatus, cancelReason) {
+    console.log('开始本地更新订单状态:', orderId, newStatus, cancelReason);
+    const orders = this.data.orders;
+    
+    for (let i = 0; i < orders.length; i++) {
+      if (orders[i].orderId === orderId) {
+        // 更新状态相关字段
+        orders[i].orderStatus = newStatus;
+        orders[i].orderStatusText = this.data.orderStatusMap[newStatus] || '未知状态';
+        orders[i].statusClass = this.getStatusClass(newStatus);
+        
+        // 如果是完成状态，设置完成时间
+        if (newStatus === 2) {
+          const now = new Date();
+          orders[i].completionTime = this.formatTime(now);
+        }
+        
+        // 如果是取消状态，设置取消原因和时间
+        if (newStatus === 3 && cancelReason) {
+          const now = new Date();
+          orders[i].cancelTime = this.formatTime(now);
+          orders[i].cancelReason = cancelReason;
+        }
+        
+        console.log('订单状态更新成功:', orders[i].orderId, orders[i].orderStatusText);
+        break;
+      }
+    }
+    
+    this.setData({ orders });
   },
 
   // 格式化金额
@@ -161,12 +268,35 @@ Page({
 
   // 刷新订单列表
   refreshOrders() {
+    // 记录当前的滚动位置
+    this.scrollPosition = undefined;
+    wx.createSelectorQuery()
+      .selectViewport()
+      .scrollOffset(res => {
+        this.scrollPosition = res.scrollTop || 0;
+        console.log('记录当前滚动位置:', this.scrollPosition);
+      })
+      .exec();
+
     this.setData({
       orders: [],
       pageNum: 1,
       hasMore: true
     });
-    return this.loadOrders();
+
+    // 返回加载订单的Promise，在加载完成后恢复滚动位置
+    return this.loadOrders().then(() => {
+      // 加载完成后，延迟一小段时间再恢复滚动位置，确保DOM已更新
+      setTimeout(() => {
+        if (this.scrollPosition !== undefined) {
+          console.log('恢复滚动位置到:', this.scrollPosition);
+          wx.pageScrollTo({
+            scrollTop: this.scrollPosition,
+            duration: 0 // 立即滚动，没有动画
+          });
+        }
+      }, 300);
+    });
   },
 
   // 加载订单列表

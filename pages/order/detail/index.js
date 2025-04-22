@@ -266,18 +266,18 @@ Page({
           
           console.log('正在提交完成订单请求，orderId:', orderId);
           
-          // 尝试使用JSON格式
+          // 按照API文档格式发送请求
           wx.request({
             url: 'http://localhost:8051/api/orders/complete',
             method: 'POST',
             header: {
-              'Content-Type': 'application/json', // 使用JSON格式
+              'Content-Type': 'application/json',
               'token': wx.getStorageSync('token')
             },
-            data: orderId, // 直接发送数值，不包装在对象中
+            data: orderId, // 直接发送订单ID
             success: (res) => {
               console.log('完成订单API响应:', res.data);
-              if (res.data.code === 1) {
+              if (res.data.code === 1) { // 后端返回code为1表示成功
                 // 先隐藏加载中
                 wx.hideLoading();
                 
@@ -293,14 +293,20 @@ Page({
                 
                 // 等待动画完成后刷新数据
                 setTimeout(() => {
-                  // 通知上级页面刷新列表
+                  // 刷新当前页面的订单详情
+                  this.loadOrderDetail(orderId);
+                  
+                  // 检查是否有上一页，并更新列表中的订单状态（不刷新整个列表）
                   const pages = getCurrentPages();
-                  // 如果有上一页
                   if (pages.length > 1) {
-                    // 获取上一页
                     const prevPage = pages[pages.length - 2];
-                    // 如果上一页有refreshOrders方法，调用刷新
-                    if (prevPage && prevPage.refreshOrders) {
+                    // 如果上一页是订单列表页且有updateLocalOrderStatus方法
+                    if (prevPage && prevPage.route.includes('order/order') && prevPage.updateLocalOrderStatus) {
+                      console.log('通知列表页更新订单状态:', orderId, 2);
+                      prevPage.updateLocalOrderStatus(orderId, 2);
+                    }
+                    // 如果上一页有refreshOrders方法但不支持更新单个订单
+                    else if (prevPage && prevPage.refreshOrders) {
                       prevPage.refreshOrders();
                     }
                   }
@@ -334,8 +340,23 @@ Page({
    */
   onBackToList: function() {
     const pages = getCurrentPages();
+    
     // 如果有上一页，直接返回
     if (pages.length > 1) {
+      // 检查上一页是否是订单列表页
+      const prevPage = pages[pages.length - 2];
+      if (prevPage && prevPage.route.includes('order/order')) {
+        // 不触发刷新，只更新当前操作的订单状态
+        const orderId = this.data.orderId;
+        const orderStatus = this.data.orderInfo ? this.data.orderInfo.orderStatus : null;
+        
+        // 如果上一页有updateLocalOrderStatus方法，直接更新对应订单
+        if (prevPage.updateLocalOrderStatus && orderStatus) {
+          console.log('通知列表页更新订单状态:', orderId, orderStatus);
+          prevPage.updateLocalOrderStatus(Number(orderId), orderStatus);
+        }
+      }
+      
       wx.navigateBack({
         delta: 1
       });
@@ -364,7 +385,7 @@ Page({
             placeholderText: '请输入取消原因',
             success: (modalRes) => {
               if (modalRes.confirm) {
-                const reason = modalRes.content || '用户主动取消';
+                const cancelReason = modalRes.content || '用户主动取消';
                 
                 // 显示加载中
                 wx.showLoading({
@@ -375,17 +396,17 @@ Page({
                 // 获取订单ID
                 const orderId = Number(this.data.orderId);
                 
-                // 尝试使用JSON格式
+                // 按照API文档格式构建请求参数
                 wx.request({
                   url: 'http://localhost:8051/api/orders/cancel',
                   method: 'POST',
                   header: {
-                    'Content-Type': 'application/json', // 使用JSON格式
+                    'Content-Type': 'application/json',
                     'token': wx.getStorageSync('token')
                   },
                   data: {
                     orderId: orderId,
-                    reason: reason
+                    cancelReason: cancelReason  // 修改参数名称为cancelReason
                   },
                   success: (res) => {
                     console.log('取消订单API响应:', res.data);
@@ -395,7 +416,7 @@ Page({
                     
                     if (res.data.code === 1) {
                       // 本地更新订单状态
-                      this.updateOrderStatus(3, reason);
+                      this.updateOrderStatus(3, cancelReason);
                       
                       // 展示成功动画
                       wx.showToast({
@@ -406,10 +427,20 @@ Page({
                       
                       // 通知上级页面刷新列表
                       setTimeout(() => {
+                        // 刷新当前页面的订单详情
+                        this.loadOrderDetail(orderId);
+                        
+                        // 检查是否有上一页，并更新列表中的订单状态（不刷新整个列表）
                         const pages = getCurrentPages();
                         if (pages.length > 1) {
                           const prevPage = pages[pages.length - 2];
-                          if (prevPage && prevPage.refreshOrders) {
+                          // 如果上一页是订单列表页且有updateLocalOrderStatus方法
+                          if (prevPage && prevPage.route.includes('order/order') && prevPage.updateLocalOrderStatus) {
+                            console.log('通知列表页更新订单状态:', orderId, 3);
+                            prevPage.updateLocalOrderStatus(orderId, 3, cancelReason);
+                          }
+                          // 如果上一页有refreshOrders方法但不支持更新单个订单
+                          else if (prevPage && prevPage.refreshOrders) {
                             prevPage.refreshOrders();
                           }
                         }

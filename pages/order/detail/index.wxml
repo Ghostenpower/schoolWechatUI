@@ -116,21 +116,16 @@
 
     <!-- 操作按钮 -->
     <view class="bottom-actions" wx:if="{{orderInfo.orderStatus === 1}}">
-      <button 
-        class="btn primary-btn" 
-        bindtap="onConfirmComplete"
-        hover-class="btn-hover"
-      >
-        <text class="btn-icon">✓</text> 确认完成
-      </button>
-
-      <button 
-        class="btn cancel-btn" 
-        bindtap="onCancelOrder"
-        hover-class="btn-hover"
-      >
-        <text class="btn-icon">✕</text> 取消订单
-      </button>
+      <view class="action-wrapper">
+        <text class="cancel-link" bindtap="onCancelOrder">取消订单</text>
+        <button 
+          class="btn primary-btn" 
+          bindtap="onConfirmComplete"
+          hover-class="btn-hover"
+        >
+          <text class="btn-icon">✓</text> 确认完成
+        </button>
+      </view>
     </view>
 
     <!-- 订单已完成/取消时的底部按钮 -->
