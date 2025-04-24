@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "发布任务",
-  "usingComponents": {}
+  "usingComponents": {},
+  "navigationBarBackgroundColor": "#27BA9B",
+  "navigationBarTextStyle": "white"
 } 

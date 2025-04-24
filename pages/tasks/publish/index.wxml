@@ -1,4 +1,169 @@
 <!--pages/tasks/publish/index.wxml-->
-<view>
-  
+<view class="publish-container">
+  <view class="form-container">
+    <form bindsubmit="submitForm">
+      <!-- 任务类型选择 -->
+      <view class="form-group task-type-group">
+        <view class="form-label required">任务类型</view>
+        <view class="task-types">
+          <view 
+            class="task-type-item {{taskType === 1 ? 'active' : ''}}" 
+            bindtap="selectTaskType" 
+            data-type="1">
+            <image src="/images/icons/express.png" mode="aspectFit"></image>
+            <text>快递代取</text>
+          </view>
+          <view 
+            class="task-type-item {{taskType === 2 ? 'active' : ''}}" 
+            bindtap="selectTaskType" 
+            data-type="2">
+            <image src="/images/icons/errand.png" mode="aspectFit"></image>
+            <text>跑腿代办</text>
+          </view>
+          <view 
+            class="task-type-item {{taskType === 3 ? 'active' : ''}}" 
+            bindtap="selectTaskType" 
+            data-type="3">
+            <image src="/images/icons/shopping.png" mode="aspectFit"></image>
+            <text>代购服务</text>
+          </view>
+          <view 
+            class="task-type-item {{taskType === 4 ? 'active' : ''}}" 
+            bindtap="selectTaskType" 
+            data-type="4">
+            <image src="/images/icons/print.png" mode="aspectFit"></image>
+            <text>打印服务</text>
+          </view>
+          <view 
+            class="task-type-item {{taskType === 5 ? 'active' : ''}}" 
+            bindtap="selectTaskType" 
+            data-type="5">
+            <image src="/images/icons/others.png" mode="aspectFit"></image>
+            <text>其他服务</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 任务标题 -->
+      <view class="form-group">
+        <view class="form-label required">任务标题</view>
+        <input 
+          class="form-input" 
+          name="title" 
+          value="{{formData.title}}"
+          placeholder="请输入任务标题（5-20字）" 
+          maxlength="20"
+          bindinput="onInputTitle"
+        />
+        <view class="word-count">{{titleLength}}/20</view>
+      </view>
+
+      <!-- 任务描述 -->
+      <view class="form-group">
+        <view class="form-label required">任务描述</view>
+        <textarea 
+          class="form-textarea" 
+          name="description" 
+          value="{{formData.description}}"
+          placeholder="请详细描述任务内容、要求等信息（不超过200字）" 
+          maxlength="200"
+          bindinput="onInputDescription"
+        />
+        <view class="word-count">{{descriptionLength}}/200</view>
+      </view>
+
+      <!-- 取件位置 -->
+      <view class="form-group">
+        <view class="form-label required">取件位置</view>
+        <view class="location-picker" bindtap="choosePickupLocation">
+          <view class="{{formData.pickupLocation ? 'location-text' : 'location-placeholder'}}">
+            {{formData.pickupLocation || '点击选择取件位置'}}
+          </view>
+          <image class="location-icon" src="/images/icons/location.png" mode="aspectFit"></image>
+        </view>
+      </view>
+
+      <!-- 送达位置 -->
+      <view class="form-group">
+        <view class="form-label required">送达位置</view>
+        <view class="location-picker" bindtap="chooseDeliveryLocation">
+          <view class="{{formData.deliveryLocation ? 'location-text' : 'location-placeholder'}}">
+            {{formData.deliveryLocation || '点击选择送达位置'}}
+          </view>
+          <image class="location-icon" src="/images/icons/location.png" mode="aspectFit"></image>
+        </view>
+      </view>
+
+      <!-- 截止时间 -->
+      <view class="form-group">
+        <view class="form-label required">截止时间</view>
+        <picker 
+          mode="multiSelector" 
+          value="{{deadlineIndex}}" 
+          range="{{deadlineArray}}" 
+          bindchange="onDeadlineChange"
+          class="deadline-picker"
+        >
+          <view class="{{formData.deadline ? 'deadline-text' : 'deadline-placeholder'}}">
+            {{formData.deadline || '请选择任务截止时间'}}
+          </view>
+        </picker>
+      </view>
+
+      <!-- 悬赏金额 -->
+      <view class="form-group">
+        <view class="form-label required">悬赏金额</view>
+        <view class="reward-input-container">
+          <text class="reward-symbol">¥</text>
+          <input 
+            class="reward-input" 
+            name="reward" 
+            type="digit"
+            value="{{formData.reward}}"
+            placeholder="请输入悬赏金额" 
+            bindinput="onInputReward"
+          />
+        </view>
+      </view>
+
+      <!-- 备注信息 -->
+      <view class="form-group">
+        <view class="form-label">备注信息</view>
+        <textarea 
+          class="form-textarea" 
+          name="remark" 
+          value="{{formData.remark}}"
+          placeholder="请输入备注信息（选填，不超过100字）" 
+          maxlength="100"
+          bindinput="onInputRemark"
+        />
+        <view class="word-count">{{remarkLength}}/100</view>
+      </view>
+
+      <!-- 上传图片 -->
+      <view class="form-group">
+        <view class="form-label">上传图片</view>
+        <view class="upload-container">
+          <view class="image-list">
+            <view 
+              class="image-item" 
+              wx:for="{{uploadedImages}}" 
+              wx:key="index"
+            >
+              <image src="{{item}}" mode="aspectFill" bindtap="previewImage" data-index="{{index}}"></image>
+              <view class="delete-btn" catchtap="deleteImage" data-index="{{index}}">×</view>
+            </view>
+            <view class="upload-btn" bindtap="chooseImage" wx:if="{{uploadedImages.length < 3}}">
+              <image src="/images/icons/add-photo.png" mode="aspectFit"></image>
+              <text>添加图片</text>
+            </view>
+          </view>
+          <view class="upload-tip">最多可上传3张图片</view>
+        </view>
+      </view>
+
+      <!-- 提交按钮 -->
+      <button class="submit-btn" form-type="submit">发布任务</button>
+    </form>
+  </view>
 </view> 

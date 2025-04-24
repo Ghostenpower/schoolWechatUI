@@ -1,1 +1,272 @@
-/* 样式待设计 */ 
+/* pages/tasks/publish/index.wxss */
+.publish-container {
+  min-height: 100vh;
+  background-color: #f8f8f8;
+  padding-bottom: 40rpx;
+}
+
+.form-container {
+  padding: 30rpx;
+}
+
+/* 表单通用样式 */
+.form-group {
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.03);
+}
+
+.form-label {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 20rpx;
+  font-weight: 500;
+}
+
+.required::before {
+  content: '*';
+  color: #ff4d4f;
+  margin-right: 8rpx;
+}
+
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  background-color: #f8f8f8;
+  border-radius: 8rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.form-textarea {
+  width: 100%;
+  height: 200rpx;
+  background-color: #f8f8f8;
+  border-radius: 8rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.word-count {
+  text-align: right;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 16rpx;
+}
+
+/* 任务类型样式 */
+.task-type-group {
+  margin-bottom: 30rpx;
+}
+
+.task-types {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -10rpx;
+}
+
+.task-type-item {
+  width: calc(33.33% - 20rpx);
+  height: 160rpx;
+  margin: 10rpx;
+  background-color: #f8f8f8;
+  border-radius: 12rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s;
+}
+
+.task-type-item image {
+  width: 64rpx;
+  height: 64rpx;
+  margin-bottom: 16rpx;
+}
+
+.task-type-item text {
+  font-size: 24rpx;
+  color: #666;
+  transition: color 0.3s;
+}
+
+.task-type-item.active {
+  background-color: rgba(39, 186, 155, 0.1);
+  border: 2rpx solid #27BA9B;
+}
+
+.task-type-item.active text {
+  color: #27BA9B;
+  font-weight: 500;
+}
+
+/* 位置选择器样式 */
+.location-picker {
+  height: 80rpx;
+  background-color: #f8f8f8;
+  border-radius: 8rpx;
+  padding: 0 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.location-text {
+  font-size: 28rpx;
+  color: #333;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.location-placeholder {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.location-icon {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
+}
+
+/* 截止时间选择器样式 */
+.deadline-picker {
+  height: 80rpx;
+  background-color: #f8f8f8;
+  border-radius: 8rpx;
+  padding: 0 24rpx;
+  display: flex;
+  align-items: center;
+}
+
+.deadline-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.deadline-placeholder {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 悬赏金额输入样式 */
+.reward-input-container {
+  height: 80rpx;
+  background-color: #f8f8f8;
+  border-radius: 8rpx;
+  padding: 0 24rpx;
+  display: flex;
+  align-items: center;
+}
+
+.reward-symbol {
+  font-size: 32rpx;
+  color: #333;
+  margin-right: 12rpx;
+  font-weight: 500;
+}
+
+.reward-input {
+  flex: 1;
+  height: 100%;
+  font-size: 28rpx;
+  color: #333;
+}
+
+/* 图片上传样式 */
+.upload-container {
+  margin-top: 20rpx;
+}
+
+.image-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.image-item {
+  width: 200rpx;
+  height: 200rpx;
+  margin-right: 20rpx;
+  margin-bottom: 20rpx;
+  position: relative;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.image-item image {
+  width: 100%;
+  height: 100%;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 10rpx;
+  right: 10rpx;
+  width: 40rpx;
+  height: 40rpx;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 28rpx;
+  z-index: 10;
+}
+
+.upload-btn {
+  width: 200rpx;
+  height: 200rpx;
+  background-color: #f8f8f8;
+  border: 2rpx dashed #ddd;
+  border-radius: 8rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.upload-btn image {
+  width: 60rpx;
+  height: 60rpx;
+  margin-bottom: 12rpx;
+}
+
+.upload-btn text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.upload-tip {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 10rpx;
+}
+
+/* 提交按钮样式 */
+.submit-btn {
+  background: linear-gradient(135deg, #27BA9B, #1ca385);
+  color: #fff;
+  width: 90%;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-top: 60rpx;
+  box-shadow: 0 8rpx 20rpx rgba(39, 186, 155, 0.2);
+  transition: opacity 0.3s;
+}
+
+.submit-btn:active {
+  opacity: 0.9;
+} 
