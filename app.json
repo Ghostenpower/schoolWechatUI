@@ -4,6 +4,7 @@
     "pages/profile/profile",
     "pages/tasks/publish/index",
     "pages/tasks/detail/index",
+    "pages/tasks/list/index",
     "pages/tasks/my/index",
     "pages/order/list/index",
     "pages/order/order",

@@ -1,0 +1,331 @@
+/* pages/tasks/list/index.wxss */
+.container {
+  padding-bottom: 40rpx;
+  background-color: #f7f7f7;
+  min-height: 100vh;
+}
+
+/* 顶部筛选栏 */
+.filter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #fff;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+/* 分类选择器 */
+.category-selector {
+  padding: 20rpx 0;
+  background-color: #fff;
+}
+
+.category-scroll {
+  white-space: nowrap;
+  padding: 10rpx 30rpx;
+}
+
+.category-item {
+  display: inline-block;
+  padding: 12rpx 24rpx;
+  margin-right: 20rpx;
+  font-size: 28rpx;
+  color: #666;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  transition: all 0.2s;
+}
+
+.category-item.active {
+  background-color: rgba(39, 186, 155, 0.1);
+  color: #27BA9B;
+  font-weight: 500;
+}
+
+/* 任务列表 */
+.task-list {
+  padding: 20rpx;
+}
+
+/* 任务项样式 */
+.task-item {
+  margin-bottom: 24rpx;
+}
+
+/* 任务卡片样式 */
+.task-card {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  padding: 24rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 根据任务类型添加左侧边框颜色 */
+.task-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 8rpx;
+  height: 100%;
+  background-color: #27BA9B; /* 默认颜色 */
+}
+
+.task-item:nth-child(3n+1) .task-card::before {
+  background-color: #27BA9B; /* 绿色 */
+}
+
+.task-item:nth-child(3n+2) .task-card::before {
+  background-color: #FF8F1F; /* 橙色 */
+}
+
+.task-item:nth-child(3n+3) .task-card::before {
+  background-color: #646EFF; /* 蓝色 */
+}
+
+/* 任务卡片头部 */
+.task-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+/* 用户信息 */
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  margin-right: 12rpx;
+  background-color: #f0f0f0;
+}
+
+.username {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+/* 任务标签 */
+.task-tag {
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  height: 40rpx;
+  line-height: 40rpx;
+  text-align: center;
+  border-radius: 6rpx;
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.task-tag.express {
+  background-color: #27BA9B;
+}
+
+.task-tag.errand {
+  background-color: #ff8f1f;
+}
+
+.task-tag.shopping {
+  background-color: #ff4d4f;
+}
+
+.task-tag.print {
+  background-color: #646eff;
+}
+
+.task-tag.other {
+  background-color: #8c8c8c;
+}
+
+/* 任务标题 */
+.task-card-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #1a1a1a;
+  margin-bottom: 20rpx;
+  padding-left: 12rpx;
+}
+
+/* 任务详情区域 */
+.task-card-details {
+  margin-bottom: 24rpx;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.detail-icon {
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 10rpx;
+}
+
+/* 任务底部区域 */
+.task-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+/* 价格样式 */
+.price {
+  display: flex;
+  align-items: baseline;
+}
+
+.price-symbol {
+  color: #ff4d4f;
+  font-size: 28rpx;
+  font-weight: bold;
+  margin-right: 4rpx;
+}
+
+.price-value {
+  color: #ff4d4f;
+  font-size: 36rpx;
+  font-weight: bold;
+  min-width: 60rpx; /* 确保即使没有价格也保持一定宽度 */
+}
+
+/* 操作区域 */
+.action-area {
+  display: flex;
+  align-items: center;
+}
+
+/* 接单按钮 */
+.action-btn {
+  background-color: transparent;
+  color: #999;
+  font-size: 28rpx;
+  padding: 10rpx 30rpx;
+  border-radius: 30rpx;
+  line-height: 1.4;
+  margin: 0;
+  min-width: 110rpx;
+  text-align: center;
+  border: 1rpx solid #e5e5e5;
+}
+
+.action-btn::after {
+  border: none;
+}
+
+.accept-btn {
+  background-color: #27BA9B;
+  color: #fff;
+  border: none;
+}
+
+/* 状态标签 */
+.status-badge {
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  background-color: #f0f0f0;
+  color: #999;
+  text-align: center;
+}
+
+.status-badge.accepted {
+  background-color: rgba(39, 186, 155, 0.15);
+  color: #27BA9B;
+}
+
+.status-badge.completed {
+  background-color: rgba(140, 140, 140, 0.15);
+  color: #8c8c8c;
+}
+
+.status-badge.cancelled {
+  background-color: rgba(255, 77, 79, 0.15);
+  color: #ff4d4f;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 160rpx 0;
+}
+
+.empty-image {
+  width: 240rpx;
+  height: 240rpx;
+  margin-bottom: 40rpx;
+  opacity: 0.8;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #666;
+  letter-spacing: 2rpx;
+  margin-bottom: 16rpx;
+  font-weight: 500;
+}
+
+.empty-tip {
+  font-size: 26rpx;
+  color: #999;
+  letter-spacing: 1rpx;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 0;
+}
+
+.loading {
+  width: 80rpx;
+  height: 80rpx;
+  border: 6rpx solid #f3f3f3;
+  border-top: 6rpx solid #27BA9B;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 30rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+  letter-spacing: 2rpx;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 加载更多 */
+.load-more {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+.load-more text {
+  font-size: 28rpx;
+  color: #999;
+  letter-spacing: 2rpx;
+} 

@@ -1,5 +1,6 @@
 <!--pages/tasks/tasks.wxml-->
 <view class="container">
+
   <!-- 搜索栏 -->
   <view class="search-bar">
     <view class="search-input-wrap">
@@ -14,64 +15,93 @@
     </view>
   </view>
 
-  <!-- 顶部标签栏 -->
-  <view class="tabs">
-    <view 
-      wx:for="{{tabs}}" 
-      wx:key="*this" 
-      class="tab {{activeTab === index ? 'active' : ''}}"
-      bindtap="onTabChange"
-      data-index="{{index}}"
-    >
-      {{item}}
-    </view>
+  <!-- 广告横幅 -->
+  <swiper class="ad-banner" indicator-dots circular autoplay interval="3000">
+    <swiper-item>
+      <image class="ad-image" src="/images/banners/banner3.png" mode="aspectFill"/>
+    </swiper-item>
+    <swiper-item>
+      <image class="ad-image" src="/images/banners/banner3.png" mode="aspectFill"/>
+    </swiper-item>
+  </swiper>
+
+    <!-- 公告栏 -->
+    <view class="announcement-bar">
+    <image class="announcement-icon" src="/images/icons/announcement.png" mode="aspectFit"/>
+    <text class="announcement-text">公告：平台严禁发布违规任务，违者将被封禁账号</text>
   </view>
 
-  <!-- 任务列表 -->
-  <view class="task-list">
-    <view class="task-item" wx:for="{{tasks}}" wx:key="id">
-      <view class="task-header" bindtap="onViewTask" data-id="{{item.id}}">
+<!-- 校园服务板块 - 优化设计 -->
+<view class="campus-services">
+  <view class="section-header">
+    <text class="section-title">校园跑腿</text>
+  </view>
+  <scroll-view class="services-scroll" scroll-x enable-flex show-scrollbar="{{false}}">
+    <view class="enhanced-service-item" bindtap="onServiceTap" data-type="express">
+      <view class="service-icon-wrapper express">
+        <image class="service-icon" src="/images/icons/express.png" mode="aspectFit"/>
+      </view>
+      <text class="service-name">快递代取</text>
+    </view>
+    <view class="enhanced-service-item" bindtap="onServiceTap" data-type="errand">
+      <view class="service-icon-wrapper errand">
+        <image class="service-icon" src="/images/icons/errand.png" mode="aspectFit"/>
+      </view>
+      <text class="service-name">跑腿代办</text>
+    </view>
+    <view class="enhanced-service-item" bindtap="onServiceTap" data-type="shopping">
+      <view class="service-icon-wrapper shopping">
+        <image class="service-icon" src="/images/icons/shopping.png" mode="aspectFit"/>
+      </view>
+      <text class="service-name">代购服务</text>
+    </view>
+    <view class="enhanced-service-item" bindtap="onServiceTap" data-type="print">
+      <view class="service-icon-wrapper print">
+        <image class="service-icon" src="/images/icons/print.png" mode="aspectFit"/>
+      </view>
+      <text class="service-name">打印服务</text>
+    </view>
+    <view class="enhanced-service-item" bindtap="onServiceTap" data-type="rental">
+      <view class="service-icon-wrapper rental">
+        <image class="service-icon" src="/images/icons/others.png" mode="aspectFit"/>
+      </view>
+      <text class="service-name">其他</text>
+    </view>
+  </scroll-view>
+</view>
+
+<!-- 热门任务板块 - 优化设计 -->
+<view class="hot-tasks-section">
+  <view class="section-header">
+    <text class="section-title">热门任务</text>
+    <text class="section-more" bindtap="onMoreHotTasks">查看全部</text>
+  </view>
+  
+  <view class="enhanced-hot-tasks">
+    <view class="enhanced-hot-task" 
+          wx:for="{{hotTasks}}" 
+          wx:key="id" 
+          wx:if="{{index < 2}}"
+          bindtap="onViewTask" 
+          data-id="{{item.id}}">
+      <view class="hot-task-left">
         <image class="publisher-avatar" src="{{item.publisher.avatar}}" mode="aspectFill"/>
-        <text class="publisher-name">{{item.publisher.nickname}}</text>
-        <text class="task-time">{{item.createTime}}</text>
       </view>
-      <view class="task-content" bindtap="onViewTask" data-id="{{item.id}}">
-        <view class="task-title">{{item.title}}</view>
-        <view class="task-desc">{{item.description}}</view>
-        <view class="task-info">
-          <view class="info-item">
-            <image class="icon" src="/images/icons/location.png" mode="aspectFit"/>
-            <text>{{item.location}}</text>
-          </view>
-          <view class="info-item">
-            <image class="icon" src="/images/icons/destination.png" mode="aspectFit"/>
-            <text>{{item.destination}}</text>
-          </view>
-          <view class="info-item">
-            <image class="icon" src="/images/icons/time.png" mode="aspectFit"/>
-            <text>{{item.deadline}}</text>
-          </view>
+      <view class="hot-task-right">
+        <view class="hot-task-header">
+          <text class="hot-task-title">{{item.title}}</text>
+          <view class="hot-task-tag {{item.type}}">{{item.type === 'express' ? '快递' : item.type === 'errand' ? '跑腿' : item.type === 'shopping' ? '代购' : '其他'}}</view>
         </view>
-      </view>
-      <view class="task-footer">
-        <view class="task-footer-left">
-          <text class="task-status {{item.status}}">{{item.status === 'pending' ? '待接单' : '已接单'}}</text>
-          <view class="reward">
-            <text class="currency">¥</text>
-            <text class="amount">{{formatAmount(item.reward)}}</text>
-          </view>
+        <view class="hot-task-desc">{{item.description}}</view>
+        <view class="hot-task-footer">
+          <view class="hot-task-publisher">{{item.publisher.nickname || '用户' + (index+1)}}</view>
+          <view class="hot-task-price" wx:if="{{item.reward}}">¥ {{item.reward}}</view>
+          <view class="hot-task-price" wx:else>¥ --</view>
         </view>
-        <button 
-          class="accept-btn {{item.status !== 'pending' ? 'disabled' : ''}}" 
-          bindtap="onAcceptTask" 
-          data-id="{{item.id}}"
-          disabled="{{item.status !== 'pending'}}"
-        >
-          {{item.status === 'pending' ? '接单' : '已被接单'}}
-        </button>
       </view>
     </view>
   </view>
+</view>
 
   <!-- 发布按钮 -->
   <view class="publish-btn" bindtap="onPublishTask">
