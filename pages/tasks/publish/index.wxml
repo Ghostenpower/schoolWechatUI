@@ -73,24 +73,36 @@
       </view>
 
       <!-- 取件位置 -->
-      <view class="form-group">
-        <view class="form-label required">取件位置</view>
-        <view class="location-picker" bindtap="choosePickupLocation">
-          <view class="{{formData.pickupLocation ? 'location-text' : 'location-placeholder'}}">
-            {{formData.pickupLocation || '点击选择取件位置'}}
+      <view class="form-item">
+        <view class="form-label">取件位置</view>
+        <view class="form-input-wrap">
+          <view wx:if="{{!showPickupInput}}" class="location-picker" bindtap="choosePickupLocation">
+            <text wx:if="{{!formData.pickupLocation}}">选择取件位置</text>
+            <text wx:else>{{formData.pickupLocation}}</text>
+            <text class="location-icon iconfont icon-location"></text>
           </view>
-          <image class="location-icon" src="/images/icons/location.png" mode="aspectFit"></image>
+          <input wx:if="{{showPickupInput}}" class="form-input" placeholder="请输入取件位置" value="{{formData.pickupLocation}}" bindinput="onInputPickupLocation" />
+          <view class="toggle-input-mode" bindtap="togglePickupInputMode">
+            <text wx:if="{{!showPickupInput}}">手动输入</text>
+            <text wx:else>地图选择</text>
+          </view>
         </view>
       </view>
 
       <!-- 送达位置 -->
-      <view class="form-group">
-        <view class="form-label required">送达位置</view>
-        <view class="location-picker" bindtap="chooseDeliveryLocation">
-          <view class="{{formData.deliveryLocation ? 'location-text' : 'location-placeholder'}}">
-            {{formData.deliveryLocation || '点击选择送达位置'}}
+      <view class="form-item">
+        <view class="form-label">送达位置</view>
+        <view class="form-input-wrap">
+          <view wx:if="{{!showDeliveryInput}}" class="location-picker" bindtap="chooseDeliveryLocation">
+            <text wx:if="{{!formData.deliveryLocation}}">选择送达位置</text>
+            <text wx:else>{{formData.deliveryLocation}}</text>
+            <text class="location-icon iconfont icon-location"></text>
           </view>
-          <image class="location-icon" src="/images/icons/location.png" mode="aspectFit"></image>
+          <input wx:if="{{showDeliveryInput}}" class="form-input" placeholder="请输入送达位置" value="{{formData.deliveryLocation}}" bindinput="onInputDeliveryLocation" />
+          <view class="toggle-input-mode" bindtap="toggleDeliveryInputMode">
+            <text wx:if="{{!showDeliveryInput}}">手动输入</text>
+            <text wx:else>地图选择</text>
+          </view>
         </view>
       </view>
 

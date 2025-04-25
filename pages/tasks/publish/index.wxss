@@ -106,35 +106,35 @@
   font-weight: 500;
 }
 
-/* 位置选择器样式 */
+/* 位置选择 */
 .location-picker {
-  height: 80rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 80rpx;
+  padding: 10rpx 20rpx;
   background-color: #f8f8f8;
   border-radius: 8rpx;
-  padding: 0 24rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  margin-bottom: 10rpx;
 }
 
-.location-text {
-  font-size: 28rpx;
-  color: #333;
-  max-width: 90%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.toggle-input-mode {
+  font-size: 26rpx;
+  color: #1a84ff;
+  padding: 10rpx 20rpx;
+  margin-top: 10rpx;
+  text-align: right;
 }
 
-.location-placeholder {
-  font-size: 28rpx;
-  color: #999;
+.form-input-wrap {
+  margin-top: 10rpx;
 }
 
+/* 位置图标 */
 .location-icon {
-  width: 32rpx;
-  height: 32rpx;
-  flex-shrink: 0;
+  font-size: 40rpx;
+  color: #1a84ff;
+  margin-left: 10rpx;
 }
 
 /* 截止时间选择器样式 */

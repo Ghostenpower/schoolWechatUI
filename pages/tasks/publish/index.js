@@ -17,17 +17,58 @@ Page({
     descriptionLength: 0,
     remarkLength: 0,
     uploadedImages: [],
-    deadlineArray: [
-      ['今天', '明天', '后天'],
-      new Array(24).fill(0).map((_, index) => index + '时'),
-      new Array(60).fill(0).map((_, index) => index + '分')
-    ],
-    deadlineIndex: [0, 12, 0]
+    deadlineArray: [],
+    deadlineIndex: [0, 12, 0],
+    showPickupInput: false, // 是否显示取件位置手动输入
+    showDeliveryInput: false // 是否显示送达位置手动输入
   },
 
   onLoad(options) {
     wx.setNavigationBarTitle({
       title: '发布任务'
+    });
+    
+    // 初始化截止日期选择器
+    this.initDeadlinePicker();
+  },
+  
+  // 初始化截止日期选择器
+  initDeadlinePicker() {
+    const days = [];
+    const hours = [];
+    const minutes = [];
+    
+    // 生成未来30天的日期选项
+    const now = new Date();
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(now);
+      date.setDate(now.getDate() + i);
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      // 格式化为 MM月DD日
+      if (i === 0) {
+        days.push('今天');
+      } else if (i === 1) {
+        days.push('明天');
+      } else if (i === 2) {
+        days.push('后天');
+      } else {
+        days.push(`${month}月${day}日`);
+      }
+    }
+    
+    // 生成小时选项
+    for (let i = 0; i < 24; i++) {
+      hours.push(i + '时');
+    }
+    
+    // 生成分钟选项
+    for (let i = 0; i < 60; i++) {
+      minutes.push(i + '分');
+    }
+    
+    this.setData({
+      deadlineArray: [days, hours, minutes]
     });
   },
 
@@ -74,21 +115,69 @@ Page({
     });
   },
 
+  // 监听取件位置手动输入
+  onInputPickupLocation(e) {
+    const value = e.detail.value;
+    this.setData({
+      'formData.pickupLocation': value,
+      'formData.pickupCoordinates': '' // 手动输入位置时，坐标为空
+    });
+  },
+
+  // 监听送达位置手动输入
+  onInputDeliveryLocation(e) {
+    const value = e.detail.value;
+    this.setData({
+      'formData.deliveryLocation': value,
+      'formData.deliveryCoordinates': '' // 手动输入位置时，坐标为空
+    });
+  },
+
+  // 切换取件位置手动输入模式
+  togglePickupInputMode() {
+    this.setData({
+      showPickupInput: !this.data.showPickupInput
+    });
+  },
+
+  // 切换送达位置手动输入模式
+  toggleDeliveryInputMode() {
+    this.setData({
+      showDeliveryInput: !this.data.showDeliveryInput
+    });
+  },
+
   // 选择取件位置
   choosePickupLocation() {
-    wx.chooseLocation({
+    // 增加授权检查
+    wx.getSetting({
       success: (res) => {
-        this.setData({
-          'formData.pickupLocation': res.name || res.address,
-          'formData.pickupCoordinates': `${res.longitude},${res.latitude}`
-        });
-      },
-      fail: (err) => {
-        if (err.errMsg !== 'chooseLocation:fail cancel') {
-          wx.showToast({
-            title: '选择位置失败',
-            icon: 'none'
+        if (!res.authSetting['scope.userLocation']) {
+          wx.authorize({
+            scope: 'scope.userLocation',
+            success: () => {
+              this.selectLocation('pickup');
+            },
+            fail: () => {
+              wx.showModal({
+                title: '提示',
+                content: '需要获取您的地理位置，请确认授权',
+                success: (res) => {
+                  if (res.confirm) {
+                    wx.openSetting({
+                      success: (res) => {
+                        if (res.authSetting['scope.userLocation']) {
+                          this.selectLocation('pickup');
+                        }
+                      }
+                    });
+                  }
+                }
+              });
+            }
           });
+        } else {
+          this.selectLocation('pickup');
         }
       }
     });
@@ -96,12 +185,55 @@ Page({
 
   // 选择送达位置
   chooseDeliveryLocation() {
+    // 增加授权检查
+    wx.getSetting({
+      success: (res) => {
+        if (!res.authSetting['scope.userLocation']) {
+          wx.authorize({
+            scope: 'scope.userLocation',
+            success: () => {
+              this.selectLocation('delivery');
+            },
+            fail: () => {
+              wx.showModal({
+                title: '提示',
+                content: '需要获取您的地理位置，请确认授权',
+                success: (res) => {
+                  if (res.confirm) {
+                    wx.openSetting({
+                      success: (res) => {
+                        if (res.authSetting['scope.userLocation']) {
+                          this.selectLocation('delivery');
+                        }
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        } else {
+          this.selectLocation('delivery');
+        }
+      }
+    });
+  },
+
+  // 提取选择位置的公共方法
+  selectLocation(type) {
     wx.chooseLocation({
       success: (res) => {
-        this.setData({
-          'formData.deliveryLocation': res.name || res.address,
-          'formData.deliveryCoordinates': `${res.longitude},${res.latitude}`
-        });
+        if (type === 'pickup') {
+          this.setData({
+            'formData.pickupLocation': res.name || res.address,
+            'formData.pickupCoordinates': `${res.longitude},${res.latitude}`
+          });
+        } else if (type === 'delivery') {
+          this.setData({
+            'formData.deliveryLocation': res.name || res.address,
+            'formData.deliveryCoordinates': `${res.longitude},${res.latitude}`
+          });
+        }
       },
       fail: (err) => {
         if (err.errMsg !== 'chooseLocation:fail cancel') {
@@ -117,11 +249,11 @@ Page({
   // 截止时间选择变化
   onDeadlineChange(e) {
     const [dayIndex, hourIndex, minuteIndex] = e.detail.value;
-    const days = ['今天', '明天', '后天'];
+    const days = this.data.deadlineArray[0];
     const hours = this.data.deadlineArray[1][hourIndex];
     const minutes = this.data.deadlineArray[2][minuteIndex];
     
-    const deadlineText = `${days[dayIndex]} ${hours}:${minutes.padStart(2, '0')}`;
+    const deadlineText = `${days[dayIndex]} ${hours}:${minutes.padStart(2, '0').replace('分', '')}`;
     
     // 根据选择的日期构建截止时间对象
     const now = new Date();
@@ -170,6 +302,9 @@ Page({
       mask: true
     });
     
+    // 注意：图片上传接口尚未实现，目前只是模拟上传
+    // TODO: 接入真实的图片上传API
+    /*
     // 实际的图片上传流程
     const uploadPromises = tempFilePaths.map(path => {
       return new Promise((resolve, reject) => {
@@ -196,6 +331,7 @@ Page({
         });
       });
     });
+    */
     
     // 由于现在是模拟环境，我们使用原始路径作为上传成功的结果
     // 在实际环境中应该使用 Promise.all(uploadPromises) 处理多图上传
@@ -237,23 +373,23 @@ Page({
       return;
     }
     
-    if (!formData.title || formData.title.length < 5) {
-      this.showToast('任务标题不能少于5个字符');
+    if (!formData.title) {
+      this.showToast('请输入任务标题');
       return;
     }
     
-    if (!formData.description || formData.description.length < 10) {
-      this.showToast('任务描述不能少于10个字符');
+    if (!formData.description) {
+      this.showToast('请输入任务描述');
       return;
     }
     
     if (!formData.pickupLocation) {
-      this.showToast('请选择取件位置');
+      this.showToast('请输入或选择取件位置');
       return;
     }
     
     if (!formData.deliveryLocation) {
-      this.showToast('请选择送达位置');
+      this.showToast('请输入或选择送达位置');
       return;
     }
     
@@ -273,13 +409,14 @@ Page({
       title: formData.title,
       description: formData.description,
       pickupLocation: formData.pickupLocation,
-      pickupCoordinates: formData.pickupCoordinates,
+      pickupCoordinates: formData.pickupCoordinates || '',
       deliveryLocation: formData.deliveryLocation,
-      deliveryCoordinates: formData.deliveryCoordinates,
+      deliveryCoordinates: formData.deliveryCoordinates || '',
       deadline: formData.deadlineDate, // ISO格式的日期字符串
       reward: parseFloat(formData.reward),
       remark: formData.remark,
-      imagesUrl: this.data.uploadedImages.join(',') // 图片URL以逗号分隔
+      imagesUrl: this.data.uploadedImages.length > 0 ? this.data.uploadedImages.join(',') : '', // 图片URL以逗号分隔，允许为空
+      price: parseFloat(formData.reward) // 添加price参数，与reward保持一致
     };
     
     // 提交表单
@@ -289,15 +426,15 @@ Page({
   // 提交任务数据
   submitTaskData(data) {
     const app = getApp();
-    const token = wx.getStorageSync('token');
     const baseUrl = app.globalData.baseUrl;
+    const token = wx.getStorageSync('token');
+    
     wx.showLoading({
       title: '提交中...',
       mask: true
     });
     
-    
-    // 调用实际的API提交任务
+    // 使用wx.request直接调用API
     wx.request({
       url: baseUrl + '/api/tasks/add',
       method: 'POST',
@@ -309,12 +446,13 @@ Page({
         title: data.title,
         description: data.description,
         pickupLocation: data.pickupLocation,
-        pickupCoordinates: data.pickupCoordinates,
+        pickupCoordinates: data.pickupCoordinates || '',
         deliveryLocation: data.deliveryLocation,
-        deliveryCoordinates: data.deliveryCoordinates,
+        deliveryCoordinates: data.deliveryCoordinates || '',
         deadline: data.deadline,
         remark: data.remark,
-        imagesUrl: data.imagesUrl
+        imagesUrl: data.imagesUrl, // 注意：图片上传接口尚未实现
+        price: data.price
       },
       success: (res) => {
         wx.hideLoading();
