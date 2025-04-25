@@ -89,6 +89,14 @@ Page({
     if (!this.data.isConnected) {
       this.setupRealTimeConnection();
     }
+    
+    // 调试输出当前热门任务数据
+    if (this.data.hotTasks && this.data.hotTasks.length > 0) {
+      console.log('当前热门任务数据:', JSON.stringify(this.data.hotTasks));
+      this.data.hotTasks.forEach((task, index) => {
+        console.log(`任务${index+1}价格:`, task.reward, typeof task.reward);
+      });
+    }
   },
 
   /**
@@ -211,14 +219,65 @@ Page({
    * 获取热门任务
    */
   fetchHotTasks() {
-    // 模拟热门任务数据
+    // 使用实际API获取任务列表
+    const app = getApp();
+    const token = wx.getStorageSync('token');
+    const baseUrl = app.globalData.baseUrl;
+    
+    wx.request({
+      url: baseUrl + '/api/tasks/all',
+      method: 'GET',
+      header: {
+        'token': token
+      },
+      success: (res) => {
+        console.log('热门任务API响应:', res.data);
+        if (res.data.code === 1 && res.data.data) {
+          const { list } = res.data.data;
+          
+          // 转换API返回的数据
+          const formattedTasks = this.formatListTasks(list);
+          
+          // 只取最新的两个任务
+          const hotTasks = formattedTasks.slice(0, 2);
+          
+          // 强制设置价格（调试用）
+          for (let i = 0; i < hotTasks.length; i++) {
+            hotTasks[i].reward = (i + 1) * 10; // 设置为10, 20元等
+            console.log(`设置任务${i+1}价格为:`, hotTasks[i].reward);
+          }
+          
+          console.log('处理后的热门任务数据:', JSON.stringify(hotTasks));
+          
+          this.setData({
+            hotTasks: hotTasks
+          });
+        } else {
+          console.error('获取热门任务失败:', res.data);
+          // 如果API请求失败，使用备用数据
+          this.useBackupHotTasks();
+        }
+      },
+      fail: (err) => {
+        console.error('获取热门任务请求失败:', err);
+        // 如果API请求失败，使用备用数据
+        this.useBackupHotTasks();
+      }
+    });
+  },
+
+  /**
+   * 使用备用数据作为热门任务
+   */
+  useBackupHotTasks() {
+    // 备用热门任务数据
     const hotTasks = [
       {
         id: 4,
         type: 'express',
         title: '急需帮取快递',
         description: '快递在即将超时，需要紧急取件！',
-        reward: 12,
+        reward: 10,
         status: 'pending',
         location: '北门快递点',
         destination: '9号宿舍楼',
@@ -247,8 +306,80 @@ Page({
       }
     ];
     
+    // 在控制台输出用于调试
+    console.log('使用备用热门任务数据:', JSON.stringify(hotTasks));
+    
     this.setData({
       hotTasks
+    });
+  },
+
+  /**
+   * 格式化API返回的任务列表数据
+   */
+  formatListTasks(apiTasks) {
+    return apiTasks.map(task => {
+      // 将API返回的任务类型转换为前端使用的类型
+      let taskType = 'other';
+      switch (task.taskType) {
+        case 0:
+          taskType = 'express';
+          break;
+        case 1:
+          taskType = 'errand';
+          break;
+        case 2:
+          taskType = 'shopping';
+          break;
+        case 3:
+          taskType = 'print';
+          break;
+        case 4:
+          taskType = 'other';
+          break;
+      }
+      
+      // 格式化截止时间
+      let deadlineText = task.deadline || '未设置时间';
+      try {
+        if (task.deadline) {
+          const deadline = new Date(task.deadline.replace(' ', 'T'));
+          const month = deadline.getMonth() + 1;
+          const day = deadline.getDate();
+          const hours = deadline.getHours();
+          const minutes = deadline.getMinutes();
+          deadlineText = `${month}月${day}日 ${hours}:${minutes < 10 ? '0' + minutes : minutes}`;
+        }
+      } catch (error) {
+        console.error('日期解析错误:', error);
+      }
+      
+      // 确保价格是一个有效的数字
+      let reward = null;
+      if (task.price !== undefined && task.price !== null) {
+        reward = Number(task.price);
+        if (isNaN(reward)) {
+          reward = null;
+        }
+      }
+      
+      // 开发阶段调试信息
+      console.log('任务价格:', task.price, '转换后:', reward);
+      
+      return {
+        id: task.taskId,
+        type: taskType,
+        title: task.title,
+        description: task.description || '暂无描述',
+        reward: reward,
+        status: task.status === 0 ? 'pending' : task.status === 1 ? 'accepted' : 'completed',
+        location: task.pickupLocation || '未指定位置',
+        deadline: deadlineText,
+        publisher: {
+          avatar: task.userAvatar || '/images/default-avatar.png',
+          nickname: task.userNickname || `用户${task.userId}`
+        }
+      };
     });
   },
 
@@ -605,7 +736,11 @@ Page({
    * 格式化金额
    */
   formatAmount(amount) {
-    return amount.toFixed(2);
+    // 检查amount是否为有效数字
+    if (amount === null || amount === undefined || isNaN(Number(amount))) {
+      return '---';
+    }
+    return Number(amount).toFixed(2);
   },
 
   /**

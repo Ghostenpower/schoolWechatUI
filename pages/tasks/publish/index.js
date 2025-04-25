@@ -288,20 +288,21 @@ Page({
 
   // 提交任务数据
   submitTaskData(data) {
+    const app = getApp();
+    const token = wx.getStorageSync('token');
+    const baseUrl = app.globalData.baseUrl;
     wx.showLoading({
       title: '提交中...',
       mask: true
     });
     
-    // 使用固定的测试token
-    const token = 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjIsImV4cCI6MTc0NTQyNTA1NX0.kouYqgUY47UYo6iZOOeTD1Mmc_-zbIxK-viqEs0p9T0';
     
     // 调用实际的API提交任务
     wx.request({
-      url: 'http://localhost:8051/api/tasks/add',
+      url: baseUrl + '/api/tasks/add',
       method: 'POST',
       header: {
-        'Authorization': 'Bearer ' + token
+        'token': token
       },
       data: {
         taskType: data.taskType,

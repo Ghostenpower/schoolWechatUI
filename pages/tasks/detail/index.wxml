@@ -7,104 +7,78 @@
   </block>
   <block wx:elif="{{task}}">
     <!-- 任务基本信息 -->
-    <view class="task-header">
-      <view class="task-title">{{task.title}}</view>
-      <view class="task-reward">
-        <text class="currency">¥</text>
-        <text class="number">{{formatAmount(task.reward)}}</text>
-      </view>
-      <view class="task-status {{task.status}}">
-        <text wx:if="{{task.status === 'pending'}}">等待接单</text>
-        <text wx:elif="{{task.status === 'accepted'}}">进行中</text>
-        <text wx:else>已完成</text>
+    <view class="detail-header">
+      <view class="detail-title">{{task.title}}</view>
+      <view class="detail-meta">
+        <view class="detail-price">{{task.rewardText}}</view>
+        <view class="detail-status {{task.status}}">
+          <text wx:if="{{task.status==='pending'}}">等待接单</text>
+          <text wx:elif="{{task.status==='accepted'}}">进行中</text>
+          <text wx:else>已完成</text>
+        </view>
       </view>
     </view>
 
     <!-- 任务详情 -->
-    <view class="task-section">
+    <view class="section detail">
       <view class="section-title">任务详情</view>
-      <view class="info-row">
-        <text class="label">任务描述：</text>
-        <text class="value">{{task.description}}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">取件地点：</text>
-        <text class="value">{{task.location}}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">送达地点：</text>
-        <text class="value">{{task.destination}}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">截止时间：</text>
-        <text class="value">{{task.deadline}}</text>
-      </view>
-    </view>
-
-    <!-- 快递信息 -->
-    <view class="task-section">
-      <view class="section-title">快递信息</view>
-      <view class="info-row">
-        <text class="label">取件码：</text>
-        <text class="value code" bindtap="onCopyCode">{{task.packageInfo.code}}</text>
-        <text class="copy-hint">点击复制</text>
-      </view>
-      <view class="info-row">
-        <text class="label">包裹大小：</text>
-        <text class="value">{{task.packageInfo.size}}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">重量：</text>
-        <text class="value">{{task.packageInfo.weight}}</text>
-      </view>
-    </view>
-
-    <!-- 注意事项 -->
-    <view class="task-section">
-      <view class="section-title">注意事项</view>
-      <view class="requirements-list">
-        <view class="requirement-item" wx:for="{{task.requirements}}" wx:key="*this">
-          <text class="dot">•</text>
-          <text class="text">{{item}}</text>
+      <view class="row"><text>发布时间：</text><text>{{task.createTime}}</text></view>
+      <view class="row"><text>截止时间：</text><text>{{task.deadline}}</text></view>
+      <view class="row"><text>描述：</text><text>{{task.description}}</text></view>
+      <!-- 图片列表 -->
+      <view class="row" wx:if="{{task.images && task.images.length}}">
+        <text>图片：</text>
+        <view class="image-list">
+          <block wx:for="{{task.images}}" wx:key="*this">
+            <image class="detail-image" src="{{item}}" mode="aspectFill"/>
+          </block>
         </view>
       </view>
+      <view class="row"><text>取件地：</text><text>{{task.location}}</text></view>
+      <view class="row"><text>送达地：</text><text>{{task.destination}}</text></view>
     </view>
 
-    <!-- 发布者信息 -->
-    <view class="task-section">
-      <view class="section-title">发布者信息</view>
-      <view class="user-info">
+    <!-- 备注信息 -->
+    <view class="section remarks">
+      <view class="section-title">备注信息</view>
+      <view class="row"><text>描述：</text><text>{{task.description || '无'}}</text></view>
+    </view>
+
+    <!-- 发布者 & 接单者 信息 -->
+    <view class="section users">
+      <view class="section-title">发布者</view>
+      <view class="publisher-info">
         <image class="avatar" src="{{task.publisher.avatar}}" mode="aspectFill"/>
-        <view class="user-details">
+        <view class="publisher-details">
           <text class="name">{{task.publisher.name}}</text>
-          <text class="time">发布时间：{{task.createTime}}</text>
         </view>
-        <button class="contact-btn" bindtap="onContactPublisher">联系发布者</button>
+        <view class="publisher-actions">
+          <button class="btn-link" bindtap="onContactTA">联系TA</button>
+        </view>
       </view>
-    </view>
-
-    <!-- 接单者信息 -->
-    <block wx:if="{{task.status !== 'pending' && task.acceptor}}">
-      <view class="task-section">
-        <view class="section-title">接单者信息</view>
-        <view class="user-info">
+      <block wx:if="{{task.status!=='pending' && task.acceptor}}">
+        <view class="section-title">接单者</view>
+        <view class="publisher-info">
           <image class="avatar" src="{{task.acceptor.avatar}}" mode="aspectFill"/>
-          <view class="user-details">
+          <view class="publisher-details">
             <text class="name">{{task.acceptor.name}}</text>
             <text class="time">接单时间：{{task.acceptor.acceptTime}}</text>
           </view>
-          <button class="contact-btn" bindtap="onContactAcceptor">联系接单者</button>
+          <view class="publisher-actions">
+            <button class="btn-link" bindtap="onContactMessage">发消息</button>
+            <button class="btn-link" bindtap="onContactAcceptor">电话</button>
+          </view>
         </view>
-      </view>
-    </block>
-
-    <!-- 底部操作栏 -->
-    <view class="footer-actions">
-      <block wx:if="{{task.status === 'pending'}}">
-        <button class="action-btn primary" bindtap="onAcceptTask">接受任务</button>
       </block>
-      <block wx:elif="{{task.status === 'accepted'}}">
-        <button class="action-btn primary" bindtap="onCompleteTask">完成任务</button>
+    </view>
+
+    <!-- 底部操作 -->
+    <view class="footer-actions">
+      <block wx:if="{{task.status==='pending'}}">
+        <button class="btn primary" bindtap="onAcceptTask">接受任务</button>
+      </block>
+      <block wx:elif="{{task.status==='accepted'}}">
+        <button class="btn primary" bindtap="onCompleteTask">完成任务</button>
       </block>
     </view>
   </block>

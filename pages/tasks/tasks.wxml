@@ -94,8 +94,9 @@
         </view>
         <view class="hot-task-desc">{{item.description}}</view>
         <view class="hot-task-footer">
-          <view class="hot-task-publisher">{{item.publisher.nickname}}</view>
-          <view class="hot-task-price">¥{{formatAmount(item.reward)}}</view>
+          <view class="hot-task-publisher">{{item.publisher.nickname || '用户' + (index+1)}}</view>
+          <view class="hot-task-price" wx:if="{{item.reward}}">¥ {{item.reward}}</view>
+          <view class="hot-task-price" wx:else>¥ --</view>
         </view>
       </view>
     </view>
