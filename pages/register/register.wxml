@@ -1,0 +1,39 @@
+<view class="register-container">
+    <view class="form">
+        <input class="input" placeholder="请输入用户名" 
+               data-field="username" bindinput="handleInput" />
+               
+        <input class="input" placeholder="请输入手机号" type="number" 
+               data-field="phone" bindinput="handleInput" />
+               
+        <input class="input" password placeholder="请输入密码" 
+               data-field="password" bindinput="handleInput" />
+        <view class="error-tip" wx:if="{{passwordError}}">密码不一致</view>
+               
+        <input class="input" password placeholder="请再次输入密码" 
+               data-field="confirmPassword" bindinput="handleInput" />
+        <view class="error-tip" wx:if="{{confirmPasswordError}}">密码不一致</view>
+               
+        <input class="input" placeholder="请输入邮箱(可选)" 
+               data-field="email" bindinput="handleInput" />
+        
+        <view class="agreement">
+            <checkbox-group bindchange="handleAgreementChange">
+                <label>
+                    <checkbox value="{{isAgreed}}" color="{{isAgreed ? '#27BA9B' : ''}}"/>
+                    <text>我已阅读并同意</text>
+                    <navigator url="/pages/agreement/index" class="link">《用户协议》</navigator>
+                </label>
+            </checkbox-group>
+        </view>
+        
+        <button class="register-button" bindtap="submitRegister">注册</button>
+    </view>
+    
+    <view class="login-link">
+        <text>已有账号？</text>
+        <navigator url="/pages/login/login" open-type="navigateBack" class="link">立即登录</navigator>
+    </view>
+    
+    <view class="safe-area-bottom"></view>
+</view>

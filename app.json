@@ -16,7 +16,9 @@
     "pages/feedback/feedback",
     "pages/settings/settings",
     "pages/message/message",
-    "pages/chat/detail/index"
+    "pages/chat/detail/index",
+    "pages/login/login",
+    "pages/register/register"
   ],
   "window": {
     "backgroundTextStyle": "light",

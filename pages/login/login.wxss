@@ -1,0 +1,69 @@
+/* 删除原有页面级样式，使用全局容器样式 */
+.login-container {
+  flex: 1;
+  height:100vh;
+  padding: var(--spacing-xl) var(--spacing-md);
+  background-color: var(--bg-secondary);
+}
+
+.logo {
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+.logo image {
+  width: 200rpx;
+  height: 200rpx;
+}
+
+.form {
+  margin-top: 100rpx;
+  background-color: var(--bg-primary);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.input {
+  width: 95%;
+  height: 80rpx;
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-md);
+  background-color: var(--bg-primary);
+  border: 2rpx solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.login-button {
+  width: 100%;
+  height: 88rpx;
+  font-size: var(--font-size-md);
+  background-color: var(--primary-color);
+  color: var(--bg-primary);
+  border-radius: var(--radius-md);
+  transition: background-color 0.3s;
+}
+
+.login-button:active {
+  background-color: var(--primary-dark);
+}
+
+.register-link {
+  margin-top: var(--spacing-lg);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.register-link navigator {
+  display: inline-block;
+  margin-left: var(--spacing-xs);
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+/* 适配全面屏底部安全区域 */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

@@ -9,7 +9,7 @@ Page({
   data: {
     userInfo: {
       avatarUrl: '',
-      nickName: '',
+      username: '',
       phone: ''
     },
     hasUserInfo: false,
@@ -23,15 +23,75 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
+    // 获取用户信息
+    this.getUserInfo()
+
+    // 获取用户统计数据
+    this.getUserStats()
+  },
+
+  refreshData() {
+    // 刷新用户信息和统计数据
+    console.log('正在刷新数据...')
+    this.getUserInfo()
+    this.getUserStats()
+    console.log('数据已刷新')
+  },
+
+  logout() {
+    wx.showModal({
+      title: '提示',
+      content: '确定要退出登录吗？',
+      success: (res) => {
+        if (res.confirm) {
+          wx.removeStorageSync('userInfo')
+          wx.removeStorageSync('token')
+          this.data.userInfo = {
+            avatarUrl: '',
+            username: '',
+            phone: ''
+          }
+          this.hasUserInfo = false
+
+          wx.showToast({
+            title: '已退出登录',
+            icon: 'success',
+            duration: 2000
+          })
+          this.refreshData()
+        } else if (res.cancel) {
+          console.log('用户点击取消')
+        }
+      }
+    })
+  },
+
+  getUserInfo() {
     // 检查是否已经登录
-    if (app.globalData.userInfo) {
+    let userInfo = wx.getStorageSync('userInfo');
+    if (userInfo) {
       this.setData({
-        userInfo: app.globalData.userInfo,
+        userInfo: {
+          avatarUrl: userInfo.avatarUrl || '/images/default-avatar.png',
+          username: userInfo.username || '未设置',
+          phone: userInfo.phone || '未设置',
+          balance: userInfo.balance || '0.00'
+        },
         hasUserInfo: true
       })
-      this.getUserStats()
+    } else {
+      this.setData({
+        userInfo: {
+          avatarUrl: '',
+          username: '',
+          phone: ''
+        },
+        hasUserInfo: false
+      })
+      console.log('用户未登录或信息不完整')
     }
   },
+
 
   /**
    * 生命周期函数--监听页面初次渲染完成
@@ -84,16 +144,8 @@ Page({
 
   // 获取用户信息
   getUserProfile() {
-    wx.getUserProfile({
-      desc: '用于完善用户资料',
-      success: (res) => {
-        app.globalData.userInfo = res.userInfo
-        this.setData({
-          userInfo: res.userInfo,
-          hasUserInfo: true
-        })
-        this.getUserStats()
-      }
+    wx.navigateTo({
+      url: '/pages/login/login'
     })
   },
 

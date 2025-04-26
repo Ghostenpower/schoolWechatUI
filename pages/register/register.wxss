@@ -1,0 +1,86 @@
+.register-container {
+  flex: 1;
+  height: 100vh;
+  padding: var(--spacing-xl) var(--spacing-md);
+  background-color: var(--bg-secondary);
+  box-sizing: border-box;
+}
+
+.logo {
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+.logo image {
+  width: 200rpx;
+  height: 200rpx;
+}
+
+.form {
+  background-color: var(--bg-primary);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.input {
+  width: 95%;
+  height: 80rpx;
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-md);
+  background-color: var(--bg-primary);
+  border: 2rpx solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.agreement {
+  margin: var(--spacing-md) 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.agreement .link {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.register-button {
+  width: 100%;
+  height: 88rpx;
+  font-size: var(--font-size-md);
+  background-color: var(--primary-color);
+  color: var(--bg-primary);
+  border-radius: var(--radius-md);
+  transition: background-color 0.3s;
+}
+
+.register-button:active {
+  background-color: var(--primary-dark);
+}
+
+.login-link {
+  margin-top: var(--spacing-lg);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.login-link .link {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.error-tip {
+  color: var(--error-color);
+  font-size: var(--font-size-xs);
+  margin-top: -12rpx;
+  margin-bottom: var(--spacing-sm);
+  padding-left: var(--spacing-sm);
+}
