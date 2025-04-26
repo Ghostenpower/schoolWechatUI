@@ -75,9 +75,7 @@ Page({
                                     console.log('找到目标页面，refreshData存在:', !!targetPage.refreshData);
                                     targetPage.refreshData(); // 先执行刷新
                                     setTimeout(() => {
-                                        wx.navigateBack({
-                                            delta: pages.length - pages.indexOf(targetPage) - 1
-                                        });
+                                        wx.navigateBack({ delta: 1 });
                                     }, 1000);
                                 }
                             }

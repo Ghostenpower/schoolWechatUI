@@ -200,7 +200,7 @@ Page({
   // 跳转到我的订单
   onNavigateToMyOrders() {
     wx.navigateTo({
-      url: '/pages/order/list/index'
+      url: '/pages/order/myorder/myorder'
     })
   }
 })

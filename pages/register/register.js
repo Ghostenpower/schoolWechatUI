@@ -74,7 +74,7 @@ Page({
     wx.showToast({
       title: '注册成功',
       icon: 'success',
-      complete: () => setTimeout(() => wx.redirectTo({ url: '/pages/login/login' }), 1500)
+      complete: () => setTimeout(() => wx.navigateBack({ delta: 1 }), 1500)
     });
   },
 

@@ -1,12 +1,24 @@
-<!--pages/order/list/index.wxml-->
-<view class="container">
+<view class="order-list-container">
+  <!-- 标签页 -->
+  <view class="tabs">
+    <view 
+      wx:for="{{tabs}}" 
+      wx:key="*this" 
+      class="tab {{activeTab === index ? 'active' : ''}}"
+      bindtap="onTabChange"
+      data-index="{{index}}"
+    >
+      {{item}}
+    </view>
+  </view>
+
+  <!-- 订单列表 -->
   <view class="order-list">
     <block wx:for="{{orders}}" wx:key="orderId">
-      <view class="order-item" bindtap="onTapOrder" data-id="{{item.orderId}}">
+      <view class="order-item" bindtap="onViewOrder" data-id="{{item.orderId}}">
         <view class="order-header">
           <view class="task-title">{{item.taskTitle || '未命名任务'}}</view>
           <view class="status-group">
-            <view class="task-status">{{item.taskStatusText}}</view>
             <view class="order-status {{item.statusClass}}">
               {{item.orderStatusText}}
             </view>
@@ -29,6 +41,18 @@
           <view class="description">{{item.taskDescription || '暂无描述'}}</view>
         </view>
 
+        <!-- 取消信息（如果订单已取消） -->
+        <view class="cancel-info" wx:if="{{item.orderStatus === 3 && item.cancelReason}}">
+          <view class="cancel-reason">
+            <text class="cancel-label">取消原因：</text>
+            <text class="cancel-value">{{item.cancelReason}}</text>
+          </view>
+          <view class="cancel-time" wx:if="{{item.cancelTime}}">
+            <text class="cancel-label">取消时间：</text>
+            <text class="cancel-value">{{item.cancelTime}}</text>
+          </view>
+        </view>
+
         <view class="order-footer">
           <view class="user-info">
             <image 
@@ -40,10 +64,20 @@
           </view>
           <text class="time">{{item.acceptTime ? '接单时间：' + item.acceptTime : ''}}</text>
         </view>
+
+        <!-- 操作按钮 -->
+        <view class="order-actions" wx:if="{{item.orderStatus === 1}}">
+          <button 
+            class="action-btn complete"
+            catchtap="onConfirmComplete"
+            data-id="{{item.orderId}}"
+          >确认完成</button>
+        </view>
       </view>
     </block>
   </view>
 
+  <!-- 加载状态 -->
   <view class="loading" wx:if="{{loading}}">
     <text>加载中...</text>
   </view>
