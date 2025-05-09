@@ -1,38 +1,69 @@
 /* 删除原有页面级样式，使用全局容器样式 */
 .login-container {
   flex: 1;
-  height:100vh;
+  height: 100vh;
   padding: var(--spacing-xl) var(--spacing-md);
   background-color: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo-container {
+  margin-top: 60rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .logo {
-  margin-bottom: var(--spacing-xl);
-  text-align: center;
+  width: 180rpx;
+  height: 180rpx;
+  margin-bottom: 20rpx;
 }
 
-.logo image {
-  width: 200rpx;
-  height: 200rpx;
+.app-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: var(--primary-color);
 }
 
 .form {
-  margin-top: 100rpx;
+  width: 100%;
+  margin-top: 60rpx;
   background-color: var(--bg-primary);
-  padding: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  background-color: var(--bg-secondary);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  padding: 0 var(--spacing-sm);
+}
+
+.input-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: var(--spacing-sm);
 }
 
 .input {
-  width: 95%;
-  height: 80rpx;
-  padding: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  flex: 1;
+  height: 88rpx;
   font-size: var(--font-size-md);
-  background-color: var(--bg-primary);
-  border: 2rpx solid var(--border-color);
-  border-radius: var(--radius-md);
+  background-color: transparent;
+  border: none;
+}
+
+.remember-password {
+  margin: var(--spacing-sm) 0 var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
 }
 
 .login-button {
@@ -42,11 +73,13 @@
   background-color: var(--primary-color);
   color: var(--bg-primary);
   border-radius: var(--radius-md);
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+  margin-top: var(--spacing-md);
 }
 
 .login-button:active {
   background-color: var(--primary-dark);
+  transform: scale(0.98);
 }
 
 .register-link {

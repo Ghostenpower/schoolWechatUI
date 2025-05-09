@@ -1,2 +1,30 @@
 <!--pages/settings/settings.wxml-->
-<text>pages/settings/settings.wxml</text>
+<view class="container">
+  <view class="settings-list">
+    <view class="settings-group">
+      <view class="settings-item" bindtap="onClearCache">
+        <text>清除缓存</text>
+        <text class="cache-size">{{cacheSize}}</text>
+      </view>
+      <view class="settings-item" bindtap="onCheckUpdate">
+        <text>检查更新</text>
+        <text class="version">当前版本 {{version}}</text>
+      </view>
+    </view>
+
+    <view class="settings-group">
+      <view class="settings-item" bindtap="onPrivacyPolicy">
+        <text>隐私政策</text>
+        <image class="arrow" src="/images/icons/arrow-right.png" mode="aspectFit"/>
+      </view>
+      <view class="settings-item" bindtap="onUserAgreement">
+        <text>用户协议</text>
+        <image class="arrow" src="/images/icons/arrow-right.png" mode="aspectFit"/>
+      </view>
+      <view class="settings-item" bindtap="onAboutUs">
+        <text>关于我们</text>
+        <image class="arrow" src="/images/icons/arrow-right.png" mode="aspectFit"/>
+      </view>
+    </view>
+  </view>
+</view>

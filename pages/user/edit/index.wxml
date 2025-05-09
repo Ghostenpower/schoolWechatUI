@@ -1,0 +1,15 @@
+<view class="edit-container">
+  <view class="form-item">
+    <text>用户名</text>
+    <input value="{{userInfo.username}}" disabled />
+  </view>
+  <view class="form-item">
+    <text>手机号</text>
+    <input value="{{userInfo.phone}}" bindinput="onInput" data-field="phone" />
+  </view>
+  <view class="form-item">
+    <text>邮箱</text>
+    <input value="{{userInfo.email}}" bindinput="onInput" data-field="email" />
+  </view>
+  <button class="save-btn" bindtap="submitEdit">保存</button>
+</view> 

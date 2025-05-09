@@ -1,2 +1,37 @@
 <!--pages/feedback/feedback.wxml-->
-<text>pages/feedback/feedback.wxml</text>
+<view class="container">
+  <view class="feedback-form">
+    <view class="form-item">
+      <textarea class="feedback-content" 
+                placeholder="请描述您遇到的问题或建议..." 
+                maxlength="500"
+                bindinput="onContentInput"
+                value="{{content}}"
+                auto-height/>
+      <text class="word-count">{{content.length}}/500</text>
+    </view>
+
+    <view class="form-item">
+      <view class="upload-title">上传截图（选填）</view>
+      <view class="upload-list">
+        <view class="upload-item" wx:for="{{images}}" wx:key="index">
+          <image src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}"/>
+          <view class="delete-btn" catchtap="deleteImage" data-index="{{index}}">×</view>
+        </view>
+        <view class="upload-btn" bindtap="chooseImage" wx:if="{{images.length < 3}}">
+          <image src="/images/icons/add-photo.png" mode="aspectFit"/>
+          <text>上传图片</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <input class="contact-input" 
+             placeholder="请留下您的联系方式（选填）" 
+             value="{{contact}}"
+             bindinput="onContactInput"/>
+    </view>
+
+    <button class="submit-btn" bindtap="submitFeedback" disabled="{{!content}}">提交反馈</button>
+  </view>
+</view>

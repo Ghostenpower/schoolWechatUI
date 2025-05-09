@@ -83,7 +83,6 @@ Page({
       loading: true
     });
     
-    // 调用实际API获取任务列表
     wx.request({
       url: baseUrl + '/api/tasks/all',
       method: 'GET',
@@ -94,17 +93,75 @@ Page({
         console.log('API响应数据:', res.data);
         if (res.data.code === 1 && res.data.data) {
           const { total, list } = res.data.data;
-          
-          // 转换API返回的数据为页面需要的格式
           const formattedTasks = this.formatApiTasks(list);
-          
-          // 判断是否还有更多数据
-          const hasMore = this.data.tasks.length + formattedTasks.length < total;
-          
-          this.setData({
-            loading: false,
-            tasks: [...this.data.tasks, ...formattedTasks],
-            hasMore: hasMore
+          // 分类过滤
+          let filteredTasks = formattedTasks;
+          if (this.data.currentCategory && this.data.currentCategory !== 'all') {
+            filteredTasks = formattedTasks.filter(task => task.type === this.data.currentCategory);
+          }
+          filteredTasks = filteredTasks.filter(task => task.status === 'pending');
+          const hasMore = this.data.tasks.length + filteredTasks.length < total;
+
+          // 批量获取头像昵称
+          console.log('批量请求用户信息 userIds:', filteredTasks.map(t => t.userId));
+          Promise.all(filteredTasks.map(task => {
+            return new Promise((resolve) => {
+              if (!task.userId) {
+                console.warn('任务缺少userId:', task);
+                resolve({
+                  ...task,
+                  publisher: {
+                    avatar: '/images/default-avatar.png',
+                    nickname: `用户${task.userId || task.id}`
+                  }
+                });
+                return;
+              }
+              wx.request({
+                url: `${baseUrl}/api/users/getOneById?userId=${task.userId}`,
+                method: 'GET',
+                header: {
+                  'token': wx.getStorageSync('token')
+                },
+                success: (userRes) => {
+                  console.log('用户信息接口响应:', userRes);
+                  if (userRes.data && userRes.data.code === 1 && userRes.data.data) {
+                    resolve({
+                      ...task,
+                      publisher: {
+                        avatar: userRes.data.data.avatarUrl || '/images/default-avatar.png',
+                        nickname: userRes.data.data.username || `用户${task.userId}`
+                      }
+                    });
+                  } else {
+                    resolve({
+                      ...task,
+                      publisher: {
+                        avatar: '/images/default-avatar.png',
+                        nickname: `用户${task.userId}`
+                      }
+                    });
+                  }
+                },
+                fail: (err) => {
+                  console.log('用户信息请求失败:', err);
+                  resolve({
+                    ...task,
+                    publisher: {
+                      avatar: '/images/default-avatar.png',
+                      nickname: `用户${task.userId}`
+                    }
+                  });
+                }
+              });
+            });
+          })).then(tasksWithUser => {
+            console.log('批量用户信息合并后:', tasksWithUser);
+            this.setData({
+              loading: false,
+              tasks: [...this.data.tasks, ...tasksWithUser],
+              hasMore: hasMore
+            });
           });
         } else {
           console.error('API返回错误:', res.data);
@@ -120,7 +177,6 @@ Page({
         this.setData({
           loading: false
         });
-        
         wx.showToast({
           title: '网络请求失败',
           icon: 'none'
@@ -204,6 +260,7 @@ Page({
       
       return {
         id: task.taskId,
+        userId: task.userId,
         type: taskType,
         title: task.title,
         description: task.description || '暂无描述',
@@ -278,15 +335,14 @@ Page({
             title: '处理中...',
           });
           
-          // 使用固定的测试token
-          const token = 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjIsImV4cCI6MTc0NTQyNTA1NX0.kouYqgUY47UYo6iZOOeTD1Mmc_-zbIxK-viqEs0p9T0';
-          
+          const token = wx.getStorageSync('token');
+          console.log(id)
           // 调用接单API
           wx.request({
-            url: `http://localhost:8051/api/tasks/accept/${id}`,
+            url: `http://localhost:8051/api/tasks/acceptTask?taskId=${id}`,
             method: 'POST',
             header: {
-              'Authorization': 'Bearer ' + token
+              'token': token
             },
             success: (res) => {
               wx.hideLoading();
@@ -310,6 +366,11 @@ Page({
                 wx.showToast({
                   title: '接单成功',
                   icon: 'success'
+                });
+
+                wx.setStorageSync('myTaskActiveTab', 'received');
+                wx.switchTab({
+                  url: '/pages/tasks/my/index'
                 });
               } else {
                 wx.showToast({

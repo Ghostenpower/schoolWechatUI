@@ -1,1 +1,45 @@
 /* 样式待设计 */ 
+.user-info-container {
+  padding: 40rpx 20rpx;
+  background: #f7f7f7;
+  min-height: 100vh;
+}
+.avatar-box {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 40rpx;
+}
+.avatar {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  border: 4rpx solid #fff;
+  box-shadow: 0 4rpx 24rpx #ddd;
+}
+.info-card {
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx #eee;
+  padding: 32rpx 24rpx;
+  margin-bottom: 40rpx;
+}
+.info-item {
+  font-size: 32rpx;
+  color: #333;
+  padding: 16rpx 0;
+}
+.divider {
+  height: 1rpx;
+  background: #f0f0f0;
+  margin: 0 -24rpx;
+}
+.edit-btn {
+  width: 100%;
+  background: #07c160;
+  color: #fff;
+  border: none;
+  border-radius: 32rpx;
+  padding: 24rpx 0;
+  font-size: 32rpx;
+  box-shadow: 0 4rpx 16rpx #b2f2d7;
+} 

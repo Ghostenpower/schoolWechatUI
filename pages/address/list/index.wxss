@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  background-color: var(--bg-secondary);
+  background: #f5f5f5;
   padding-bottom: 120rpx;
 }
 
@@ -9,104 +9,90 @@
 }
 
 .address-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #fff;
+  background: #fff;
+  border-radius: 12rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
-  border-radius: 12rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 }
 
 .address-info {
-  flex: 1;
-  margin-right: 20rpx;
+  margin-bottom: 20rpx;
 }
 
-.user-info {
+.recipient {
+  display: flex;
+  align-items: center;
   margin-bottom: 16rpx;
 }
 
 .name {
   font-size: 32rpx;
-  color: var(--text-primary);
-  margin-right: 20rpx;
   font-weight: 500;
+  margin-right: 20rpx;
 }
 
 .phone {
   font-size: 28rpx;
-  color: var(--text-secondary);
-  margin-right: 20rpx;
+  color: #666;
 }
 
-.tag {
-  display: inline-block;
-  padding: 4rpx 12rpx;
-  background-color: var(--primary-color);
-  color: #fff;
+.default-tag {
   font-size: 24rpx;
-  border-radius: 4rpx;
+  color: #ff6b6b;
+  border: 1rpx solid #ff6b6b;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  margin-left: 20rpx;
 }
 
-.location {
+.address-detail {
   font-size: 28rpx;
-  color: var(--text-secondary);
+  color: #333;
   line-height: 1.5;
 }
 
-.address-edit {
-  padding: 20rpx;
-  margin: -20rpx;
-}
-
-.icon-edit {
-  font-size: 40rpx;
-  color: var(--text-secondary);
-}
-
-.empty {
+.address-actions {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 120rpx;
+  justify-content: flex-end;
+  border-top: 1rpx solid #eee;
+  padding-top: 20rpx;
 }
 
-.empty-image {
-  width: 240rpx;
-  height: 240rpx;
-  margin-bottom: 30rpx;
-}
-
-.empty-text {
+.action-btn {
   font-size: 28rpx;
-  color: var(--text-secondary);
+  padding: 10rpx 30rpx;
+  margin-left: 20rpx;
 }
 
-.safe-area-bottom {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: #fff;
-  padding: 20rpx 30rpx;
-  padding-bottom: calc(20rpx + constant(safe-area-inset-bottom));
-  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.06);
+.action-btn.edit {
+  color: #666;
 }
 
-.btn {
-  height: 88rpx;
-  line-height: 88rpx;
+.action-btn.delete {
+  color: #ff6b6b;
+}
+
+.empty-tip {
   text-align: center;
-  font-size: 30rpx;
-  border-radius: 88rpx;
+  color: #999;
+  font-size: 28rpx;
+  padding: 100rpx 0;
+}
+
+.add-btn {
+  position: fixed;
+  bottom: 40rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 88rpx;
+  background: #07c160;
+  color: #fff;
+  border-radius: 44rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.icon-add {
   font-size: 32rpx;
-  margin-right: 8rpx;
+  box-shadow: 0 4rpx 16rpx rgba(7, 193, 96, 0.3);
 } 

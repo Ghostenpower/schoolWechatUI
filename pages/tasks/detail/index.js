@@ -1,7 +1,9 @@
 Page({
   data: {
     task: null,
-    loading: true
+    loading: true,
+    showPublisher: true,
+    showCompleteBtn: true
   },
 
   onLoad(options) {
@@ -9,6 +11,13 @@ Page({
       title: '任务详情'
     })
     
+    // 控制显示
+    if (options.from === 'published') {
+      this.setData({
+        showPublisher: false,
+        showCompleteBtn: false
+      })
+    }
     if (options.id) {
       this.fetchTaskDetail(options.id)
     }
@@ -45,6 +54,7 @@ Page({
               default: t.type = 'other';
             }
             t.id = found.taskId;
+            t.userId = found.userId;
             t.title = found.title;
             t.description = found.description || '暂无描述';
             t.reward = found.price != null ? parseFloat(found.price) : 0;
@@ -78,11 +88,7 @@ Page({
               .filter(url => url)
               .map(url => url.startsWith('http') || url.startsWith('https') ? url : baseUrl + url) : [];
             // 发布者信息（当前用户）
-            t.publisher = {
-              avatar: found.imagesUrl || '/images/default-avatar.png',
-              name: wx.getStorageSync('userNickname') || ('用户'+found.userId),
-              phone: ''
-            };
+            t.publisher = { avatar: '/images/default-avatar.png', nickname: `用户${found.userId}` };
             // 接单者信息
             t.acceptor = null;
             t.packageInfo = {
@@ -92,7 +98,34 @@ Page({
             };
             // 备注信息
             t.remark = found.remark || '';
-            this.setData({ task: t, loading: false });
+            // 新增：请求发布者真实信息
+            wx.request({
+              url: `${baseUrl}/api/users/getOneById?userId=${found.userId}`,
+              method: 'GET',
+              header: { 'token': wx.getStorageSync('token') },
+              success: (userRes) => {
+                if (userRes.data && userRes.data.code === 1 && userRes.data.data) {
+                  t.publisher = {
+                    avatar: userRes.data.data.avatarUrl || '/images/default-avatar.png',
+                    nickname: userRes.data.data.username || `用户${found.userId}`
+                  };
+                } else {
+                  t.publisher = {
+                    avatar: '/images/default-avatar.png',
+                    nickname: `用户${found.userId}`
+                  };
+                }
+                this.setData({ task: t, loading: false });
+              },
+              fail: () => {
+                t.publisher = {
+                  avatar: '/images/default-avatar.png',
+                  nickname: `用户${found.userId}`
+                };
+                this.setData({ task: t, loading: false });
+              }
+            });
+            console.log('当前用户ID:', wx.getStorageSync('userInfo')?.userId, '任务发布者ID:', found.userId);
           } else {
             wx.showToast({ title: '任务不存在', icon:'none' });
             this.setData({ loading: false });
@@ -112,29 +145,72 @@ Page({
 
   // 接受任务
   onAcceptTask() {
+    const app = getApp();
+    const token = wx.getStorageSync('token');
+    const taskId = this.data.task.id;
+    const myUserId = wx.getStorageSync('userInfo')?.userId;
+    if (myUserId && this.data.task && String(this.data.task.userId) === String(myUserId)) {
+      wx.showToast({
+        title: '不能接收自己发布的任务',
+        icon: 'none'
+      });
+      return;
+    }
     wx.showModal({
       title: '接受任务',
       content: '确定要接受这个任务吗？',
       success: (res) => {
         if (res.confirm) {
-          // TODO: 调用接受任务接口
-          const task = this.data.task
-          task.status = 'accepted'
-          task.acceptor = {
-            id: 2,
-            name: '李四',
-            avatar: '/images/default-avatar.png',
-            phone: '13800138000',
-            acceptTime: '2024-03-20 15:00'
-          }
-          this.setData({ task })
-          wx.showToast({
-            title: '已接受任务',
-            icon: 'success'
-          })
+          wx.showLoading({ title: '处理中...' });
+          wx.request({
+            url: `${app.globalData.baseUrl}/api/tasks/acceptTask?taskId=${taskId}`,
+            method: 'POST',
+            header: {
+              'token': token
+            },
+            success: (res) => {
+              wx.hideLoading();
+              if (res.data && res.data.code === 1) {
+                wx.showToast({
+                  title: '接单成功',
+                  icon: 'success'
+                });
+
+                // 立即更新当前任务状态为"进行中"，显示"完成任务"按钮
+                this.setData({
+                  'task.status': 'accepted'
+                });
+
+                // 跳转到"我的任务"页面的"我接收的"tab栏
+                wx.navigateTo({
+                  url: '/pages/tasks/my/index',
+                  success: function() {
+                    // 切换tab后设置activeTab为'received'
+                    const page = getCurrentPages().find(p => p.route.indexOf('tasks/my/index') !== -1);
+                    if (page) {
+                      page.setData({ activeTab: 'received' });
+                      page.refreshTasks && page.refreshTasks();
+                    }
+                  }
+                });
+              } else {
+                wx.showToast({
+                  title: res.data.msg || '接单失败',
+                  icon: 'none'
+                });
+              }
+            },
+            fail: (err) => {
+              wx.hideLoading();
+              wx.showToast({
+                title: '网络请求失败',
+                icon: 'none'
+              });
+            }
+          });
         }
       }
-    })
+    });
   },
 
   // 完成任务

@@ -2,6 +2,17 @@ Page({
     data: {
         username: '',
         password: '',
+        rememberPassword: false,
+        userInfo: {
+            avatarUrl: '',
+            username: '',
+            phone: '',
+            email: '',
+            userType: 1, // mock
+            balance: 88.88, // mock
+            status: 1, // mock
+            createdAt: '2025-04-08 12:00:00' // mock
+        }
     },
 
     // Handle input changes
@@ -13,9 +24,15 @@ Page({
         this.setData({ password: e.detail.value });
     },
 
+    onRememberChange(e) {
+        this.setData({
+            rememberPassword: e.detail.value.length > 0
+        });
+    },
+
     // Login function
     async login() {
-        const { username, password } = this.data;
+        const { username, password, rememberPassword } = this.data;
 
         // 输入验证
         if (!username || !password) {
@@ -61,8 +78,19 @@ Page({
                             userType: userData.userType,
                             status: userData.status,
                             createdAt: userData.createdAt,
-                            updatedAt: userData.updatedAt
+                            updatedAt: userData.updatedAt,
+                            balance: userData.balance
                         });
+
+                        // 如果选择了记住密码，保存登录信息
+                        if (rememberPassword) {
+                            wx.setStorageSync('savedLoginInfo', {
+                                username: username,
+                                password: password
+                            });
+                        } else {
+                            wx.removeStorageSync('savedLoginInfo');
+                        }
 
                         wx.showToast({
                             title: '登录成功',
@@ -121,11 +149,55 @@ Page({
 
     // Check if user is already logged in
     onLoad() {
+        // 检查是否有保存的登录信息
+        const savedLoginInfo = wx.getStorageSync('savedLoginInfo');
+        if (savedLoginInfo) {
+            this.setData({
+                username: savedLoginInfo.username,
+                password: savedLoginInfo.password,
+                rememberPassword: true
+            });
+        }
+
         const token = wx.getStorageSync('token');
         if (token) {
             wx.redirectTo({
                 url: '/pages/home/home', // Replace with your target page
             });
         }
+        this.loadUserInfo();
     },
+
+    loadUserInfo() {
+        const userInfo = wx.getStorageSync('userInfo');
+        if (userInfo && userInfo.userId) {
+            wx.request({
+                url: `http://localhost:8051/api/users/getOneById?userId=${userInfo.userId}`,
+                method: 'GET',
+                header: {
+                    'token': wx.getStorageSync('token')
+                },
+                success: (res) => {
+                    if (res.data.code === 1) {
+                        // 只用接口返回的头像、用户名、手机号、邮箱，其他字段用mock
+                        this.setData({
+                            userInfo: {
+                                ...this.data.userInfo,
+                                avatarUrl: res.data.data.avatarUrl,
+                                username: res.data.data.username,
+                                phone: res.data.data.phone,
+                                email: res.data.data.email
+                            }
+                        });
+                    } else {
+                        wx.showToast({ title: res.data.msg || '获取失败', icon: 'none' });
+                    }
+                }
+            });
+        }
+    },
+
+    goToEdit() {
+        wx.navigateTo({ url: '/pages/user/edit/index' });
+    }
 });

@@ -1,32 +1,68 @@
 <view class="container">
   <!-- 余额卡片 -->
   <view class="balance-card">
-    <view class="balance-title">我的余额</view>
-    <view class="balance-amount">
-      <text class="currency">¥</text>
-      <text class="number">{{balance}}</text>
-    </view>
+    <view class="balance-title">账户余额</view>
+    <view class="balance-amount">¥{{balance}}</view>
     <view class="balance-actions">
-      <button class="action-btn" bindtap="onRecharge">充值</button>
-      <button class="action-btn" bindtap="onWithdraw">提现</button>
+      <button class="action-btn recharge" bindtap="onRecharge">充值</button>
+      <button class="action-btn withdraw" bindtap="onWithdraw">提现</button>
     </view>
   </view>
 
   <!-- 交易记录 -->
-  <view class="transactions">
-    <view class="transactions-title">交易记录</view>
-    <view class="transaction-list">
-      <block wx:for="{{transactions}}" wx:key="id">
-        <view class="transaction-item">
+  <view class="transaction-list">
+    <view class="list-header">
+      <text>交易记录</text>
+      <text class="view-all" bindtap="viewAllTransactions">查看全部</text>
+    </view>
+    <view class="list-content">
+      <block wx:if="{{transactions.length > 0}}">
+        <view class="transaction-item" wx:for="{{transactions}}" wx:key="id">
           <view class="transaction-info">
-            <text class="transaction-desc">{{item.desc}}</text>
-            <text class="transaction-time">{{item.time}}</text>
+            <text class="transaction-type">{{item.type}}</text>
+            <text class="transaction-time">{{item.createTime}}</text>
           </view>
-          <view class="transaction-amount {{item.amount >= 0 ? 'income' : 'expense'}}">
-            {{item.amount >= 0 ? '+' : ''}}{{formatAmount(item.amount)}}
-          </view>
+          <text class="transaction-amount {{item.amount > 0 ? 'income' : 'expense'}}">
+            {{item.amount > 0 ? '+' : ''}}{{item.amount}}
+          </text>
         </view>
       </block>
+      <view wx:else class="empty-state">
+        <image src="/images/empty-transaction.png" mode="aspectFit"/>
+        <text>暂无交易记录</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 充值弹窗 -->
+  <view class="modal" wx:if="{{showRechargeModal}}">
+    <view class="modal-mask" bindtap="closeRechargeModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text>充值金额</text>
+        <view class="close-btn" bindtap="closeRechargeModal">×</view>
+      </view>
+      <view class="modal-body">
+        <input type="digit" 
+               class="amount-input" 
+               placeholder="请输入充值金额" 
+               value="{{rechargeAmount}}"
+               bindinput="onRechargeInput"/>
+        <view class="quick-amounts">
+          <view class="amount-item {{rechargeAmount === '50' ? 'active' : ''}}" 
+                bindtap="selectAmount" 
+                data-amount="50">50元</view>
+          <view class="amount-item {{rechargeAmount === '100' ? 'active' : ''}}" 
+                bindtap="selectAmount" 
+                data-amount="100">100元</view>
+          <view class="amount-item {{rechargeAmount === '200' ? 'active' : ''}}" 
+                bindtap="selectAmount" 
+                data-amount="200">200元</view>
+        </view>
+      </view>
+      <view class="modal-footer">
+        <button class="confirm-btn" bindtap="confirmRecharge">确认充值</button>
+      </view>
     </view>
   </view>
 </view> 
