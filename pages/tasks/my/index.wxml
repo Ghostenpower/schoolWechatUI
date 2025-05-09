@@ -1,4 +1,55 @@
 <!--pages/tasks/my/index.wxml-->
-<view>
-  
+<view class="container">
+  <!-- 任务类型切换 -->
+  <view class="task-tabs">
+    <view class="tab {{activeTab === 'published' ? 'active' : ''}}" bindtap="switchTab" data-tab="published">
+      我发布的
+    </view>
+    <view class="tab {{activeTab === 'received' ? 'active' : ''}}" bindtap="switchTab" data-tab="received">
+      我接收的
+    </view>
+  </view>
+
+  <!-- 任务列表 -->
+  <view class="task-list">
+    <block wx:if="{{tasks.length > 0}}">
+      <view class="task-item" wx:for="{{tasks}}" wx:key="id" bindtap="onTaskTap" data-task="{{item}}">
+        <view class="task-header">
+          <text class="task-title">{{item.title}}</text>
+          <text class="task-status status-{{item.status}}">{{item.statusText}}</text>
+        </view>
+        <view class="task-content">
+          <text class="task-desc">{{item.description}}</text>
+          <view class="task-info">
+            <text class="task-price">¥{{item.price}}</text>
+            <text class="task-time">{{item.createTime}}</text>
+          </view>
+        </view>
+        <view class="task-footer">
+          <view class="task-actions">
+            <button wx:if="{{showEditDelete && item.status === 'pending'}}" 
+                    class="action-btn edit" 
+                    catchtap="onEditTask" 
+                    data-id="{{item.id}}">编辑</button>
+            <button wx:if="{{showEditDelete && item.status === 'pending'}}" 
+                    class="action-btn delete" 
+                    catchtap="onDeleteTask" 
+                    data-id="{{item.id}}">取消</button>
+            <button wx:if="{{showEditDelete && item.status === 'in_progress'}}" 
+                    class="action-btn complete" 
+                    catchtap="onCompleteTask" 
+                    data-id="{{item.id}}">确认完成</button>
+            <button wx:if="{{!showEditDelete && item.status === 'in_progress'}}" 
+                    class="action-btn submit" 
+                    catchtap="onSubmitTask" 
+                    data-id="{{item.id}}">提交完成</button>
+          </view>
+        </view>
+      </view>
+    </block>
+    <view wx:else class="empty-state">
+      <image src="/images/empty-task.png" mode="aspectFit"></image>
+      <text>暂无{{activeTab === 'published' ? '发布' : '接收'}}的任务</text>
+    </view>
+  </view>
 </view>

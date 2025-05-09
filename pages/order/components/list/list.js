@@ -1,3 +1,5 @@
+const app = getApp();
+
 Component({
   properties: {
     // 外部传入的初始活动标签页
@@ -123,7 +125,8 @@ Component({
               const newOrders = this._processOrderData(res.data.data.list || []);
               const currentOrders = this.data.pageNum === 1 ? 
                 newOrders : this.data.orders.concat(newOrders);
-
+              const total = res.data.data.total || 0;
+              app.globalData.orderCount = total; // 保存订单总数到全局数据
               this.setData({
                 orders: currentOrders,
                 pageNum: this.data.pageNum + 1,

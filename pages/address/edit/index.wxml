@@ -1,2 +1,41 @@
-<!--pages/address/edit/index.wxml-->
-<text>pages/address/edit/index.wxml</text>
+<view class="container">
+  <view class="form-group">
+    <view class="form-item">
+      <text class="label">收货人</text>
+      <input class="input" 
+             placeholder="请输入收货人姓名" 
+             value="{{formData.recipientName}}"
+             data-field="recipientName"
+             bindinput="onInput" />
+    </view>
+
+    <view class="form-item">
+      <text class="label">手机号码</text>
+      <input class="input" 
+             type="number"
+             maxlength="11"
+             placeholder="请输入手机号码" 
+             value="{{formData.phone}}"
+             data-field="phone"
+             bindinput="onInput" />
+    </view>
+
+    <view class="form-item">
+      <text class="label">详细地址</text>
+      <input class="input"
+             placeholder="请输入详细地址"
+             value="{{formData.detailedAddress}}"
+             data-field="detailedAddress"
+             bindinput="onInput" />
+    </view>
+
+    <view class="form-item switch-item">
+      <text class="label">设为默认地址</text>
+      <switch checked="{{formData.isDefault}}" bindchange="toggleDefault" color="#07c160" />
+    </view>
+  </view>
+
+  <view class="submit-btn" bindtap="submitForm">
+    <text>{{isEdit ? '保存修改' : '保存地址'}}</text>
+  </view>
+</view> 

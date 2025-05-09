@@ -45,12 +45,12 @@
     </view>
 
     <!-- 发布者 & 接单者 信息 -->
-    <view class="section users">
+    <view class="section users" wx:if="{{showPublisher}}">
       <view class="section-title">发布者</view>
       <view class="publisher-info">
         <image class="avatar" src="{{task.publisher.avatar}}" mode="aspectFill"/>
         <view class="publisher-details">
-          <text class="name">{{task.publisher.name}}</text>
+          <text class="name">{{task.publisher.nickname}}</text>
         </view>
         <view class="publisher-actions">
           <button class="btn-link" bindtap="onContactTA">联系TA</button>
@@ -73,12 +73,12 @@
     </view>
 
     <!-- 底部操作 -->
-    <view class="footer-actions">
+    <view class="footer-actions" wx:if="{{showCompleteBtn}}">
       <block wx:if="{{task.status==='pending'}}">
         <button class="btn primary" bindtap="onAcceptTask">接受任务</button>
       </block>
       <block wx:elif="{{task.status==='accepted'}}">
-        <button class="btn primary" bindtap="onCompleteTask">完成任务</button>
+        <button class="btn primary" bindtap="onCompleteTask">提交完成</button>
       </block>
     </view>
   </block>

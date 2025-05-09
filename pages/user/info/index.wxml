@@ -1,4 +1,22 @@
 <!--pages/user/info/index.wxml-->
-<view>
-  
+<view class="user-info-container">
+  <view class="avatar-box">
+    <image class="avatar" src="{{userInfo.avatarUrl || '/static/default-avatar.png'}}" />
+  </view>
+  <view class="info-card">
+    <view class="info-item">用户名：{{userInfo.username}}</view>
+    <view class="divider"></view>
+    <view class="info-item">手机号：{{userInfo.phone}}</view>
+    <view class="divider"></view>
+    <view class="info-item">邮箱：{{userInfo.email}}</view>
+    <view class="divider"></view>
+    <view class="info-item">用户类型：{{userInfo.userType == 1 ? '学生' : userInfo.userType == 2 ? '商家' : '管理员'}}</view>
+    <view class="divider"></view>
+    <view class="info-item">余额：￥{{userInfo.balance}}</view>
+    <view class="divider"></view>
+    <view class="info-item">状态：{{userInfo.status == 1 ? '正常' : '禁用'}}</view>
+    <view class="divider"></view>
+    <view class="info-item">创建时间：{{userInfo.createdAt}}</view>
+  </view>
+  <button class="edit-btn" bindtap="goToEdit">编辑资料</button>
 </view> 

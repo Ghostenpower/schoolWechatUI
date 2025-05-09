@@ -28,6 +28,31 @@ Page({
 
     // 获取用户统计数据
     this.getUserStats()
+
+    const orderCount = app.globalData.orderCount || 0;
+    const userInfo = wx.getStorageSync('userInfo');
+    if (userInfo && userInfo.userId) {
+      wx.request({
+        url: `${app.globalData.baseUrl}/api/users/getOneById?userId=${userInfo.userId}`,
+        method: 'GET',
+        header: {
+          'token': wx.getStorageSync('token')
+        },
+        success: (res) => {
+          if (res.data.code === 1 && res.data.data) {
+            const balance = (res.data.data.balance || 0).toFixed(2);
+            this.setData({ 'stats.orderCount': orderCount, 'stats.balance': balance });
+          } else {
+            wx.showToast({ title: res.data.msg || '获取失败', icon: 'none' });
+          }
+        },
+        fail: () => {
+          wx.showToast({ title: '网络错误', icon: 'none' });
+        }
+      });
+    } else {
+      this.setData({ 'stats.orderCount': orderCount, 'stats.balance': '0.00' });
+    }
   },
 
   refreshData() {

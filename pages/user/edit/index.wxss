@@ -1,0 +1,37 @@
+.edit-container {
+  padding: 40rpx 20rpx;
+  background: #f7f7f7;
+  min-height: 100vh;
+}
+.form-item {
+  background: #fff;
+  border-radius: 16rpx;
+  margin-bottom: 32rpx;
+  display: flex;
+  align-items: center;
+  padding: 24rpx 20rpx;
+  box-shadow: 0 2rpx 8rpx #eee;
+}
+.form-item text {
+  width: 120rpx;
+  color: #333;
+  font-size: 32rpx;
+}
+.form-item input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 32rpx;
+  margin-left: 20rpx;
+  outline: none;
+}
+.save-btn {
+  width: 100%;
+  background: #07c160;
+  color: #fff;
+  border: none;
+  border-radius: 32rpx;
+  padding: 24rpx 0;
+  font-size: 32rpx;
+  box-shadow: 0 4rpx 16rpx #b2f2d7;
+} 

@@ -150,76 +150,80 @@ Page({
    * 获取任务列表
    */
   fetchTasks() {
-    // TODO: 通过API获取任务列表
-    // 这里使用假数据示例
-    const tasks = [
-      {
-        id: 1,
-        type: 'express',
-        title: '帮取快递',
-        description: '菜鸟驿站有一个快递，需要帮忙取一下',
-        reward: 5,
-        status: 'pending',
-        location: '菜鸟驿站',
-        destination: '6号宿舍楼',
-        createTime: '2024-03-20 14:30',
-        deadline: '2024-03-20 17:30',
-        publisher: {
-          avatar: '/images/default-avatar.png',
-          nickname: '张三'
-        }
-      },
-      {
-        id: 2,
-        type: 'errand',
-        title: '帮买晚餐',
-        description: '想吃食堂三楼的盖饭，但是我现在有事走不开',
-        reward: 8,
-        status: 'pending',
-        location: '三号食堂',
-        destination: '8号宿舍楼',
-        createTime: '2024-03-20 15:30',
-        deadline: '2024-03-20 18:00',
-        publisher: {
-          avatar: '/images/default-avatar.png',
-          nickname: '李四'
-        }
-      },
-      {
-        id: 3,
-        type: 'shopping',
-        title: '拼单外卖',
-        description: '一起拼单麦当劳，我点了汉堡薯条，帮忙带一下',
-        reward: 3,
-        status: 'accepted',
-        location: '校门口',
-        destination: '图书馆',
-        createTime: '2024-03-20 16:00',
-        deadline: '2024-03-20 17:00',
-        publisher: {
-          avatar: '/images/default-avatar.png',
-          nickname: '王五'
+    const app = getApp();
+    const token = wx.getStorageSync('token');
+    const baseUrl = app.globalData.baseUrl;
+
+    wx.request({
+      url: baseUrl + '/api/tasks/all',
+      method: 'GET',
+      header: { 'token': token },
+      success: (res) => {
+        if (res.data.code === 1 && res.data.data) {
+          const { list } = res.data.data;
+          // 格式化任务对象，确保有 userId 字段
+          const formattedTasks = list.map(task => ({
+            id: task.taskId,
+            userId: task.userId,
+            type: ['express', 'errand', 'shopping', 'print', 'other'][task.taskType] || 'other',
+            title: task.title,
+            description: task.description || '暂无描述',
+            reward: task.price,
+            status: ['pending', 'accepted', 'completed', 'cancelled'][task.status] || 'pending',
+            location: task.pickupLocation || '未指定位置',
+            deadline: task.deadline,
+            createTime: task.createdAt ? task.createdAt.replace('T', ' ') : '',
+            publisher: {
+              avatar: '/images/default-avatar.png',
+              nickname: `用户${task.userId}`
+            }
+          }));
+
+          // 批量获取用户信息
+          Promise.all(formattedTasks.map(task => {
+            return new Promise((resolve) => {
+              if (!task.userId) {
+                resolve(task);
+                return;
+              }
+              wx.request({
+                url: `${baseUrl}/api/users/getOneById?userId=${task.userId}`,
+                method: 'GET',
+                header: { 'token': token },
+                success: (userRes) => {
+                  if (userRes.data && userRes.data.code === 1 && userRes.data.data) {
+                    task.publisher = {
+                      avatar: userRes.data.data.avatarUrl || '/images/default-avatar.png',
+                      nickname: userRes.data.data.username || `用户${task.userId}`
+                    };
+                  }
+                  resolve(task);
+                },
+                fail: () => {
+                  resolve(task);
+                }
+              });
+            });
+          })).then(tasksWithUser => {
+            this.setData({
+              tasks: tasksWithUser,
+              originalTasks: tasksWithUser
+            });
+            // 应用当前筛选条件
+            this.applyFilter(this.data.activeFilter);
+            
+            // 应用当前分类
+            this.applyCategoryFilter(this.data.currentCategory);
+          });
         }
       }
-    ];
-    
-    this.setData({
-      tasks,
-      originalTasks: tasks
     });
-    
-    // 应用当前筛选条件
-    this.applyFilter(this.data.activeFilter);
-    
-    // 应用当前分类
-    this.applyCategoryFilter(this.data.currentCategory);
   },
 
   /**
    * 获取热门任务
    */
   fetchHotTasks() {
-    // 使用实际API获取任务列表
     const app = getApp();
     const token = wx.getStorageSync('token');
     const baseUrl = app.globalData.baseUrl;
@@ -231,36 +235,63 @@ Page({
         'token': token
       },
       success: (res) => {
-        console.log('热门任务API响应:', res.data);
         if (res.data.code === 1 && res.data.data) {
           const { list } = res.data.data;
-          
           // 转换API返回的数据
-          const formattedTasks = this.formatListTasks(list);
-          
-          // 只取最新的两个任务
-          const hotTasks = formattedTasks.slice(0, 2);
-          
-          // 强制设置价格（调试用）
-          for (let i = 0; i < hotTasks.length; i++) {
-            hotTasks[i].reward = (i + 1) * 10; // 设置为10, 20元等
-            console.log(`设置任务${i+1}价格为:`, hotTasks[i].reward);
-          }
-          
-          console.log('处理后的热门任务数据:', JSON.stringify(hotTasks));
-          
-          this.setData({
-            hotTasks: hotTasks
+          const formattedTasks = list.map(task => ({
+            id: task.taskId,
+            userId: task.userId,
+            type: ['express', 'errand', 'shopping', 'print', 'other'][task.taskType] || 'other',
+            title: task.title,
+            description: task.description || '暂无描述',
+            reward: task.price,
+            status: ['pending', 'accepted', 'completed', 'cancelled'][task.status] || 'pending',
+            location: task.pickupLocation || '未指定位置',
+            deadline: task.deadline,
+            createTime: task.createdAt ? task.createdAt.replace('T', ' ') : '',
+            publisher: {
+              avatar: '/images/default-avatar.png',
+              nickname: `用户${task.userId}`
+            }
+          })).filter(task => task.status === 'pending').slice(0, 2);
+
+          // 批量获取用户信息
+          Promise.all(formattedTasks.map(task => {
+            return new Promise((resolve) => {
+              if (!task.userId) {
+                resolve(task);
+                return;
+              }
+              wx.request({
+                url: `${baseUrl}/api/users/getOneById?userId=${task.userId}`,
+                method: 'GET',
+                header: { 'token': token },
+                success: (userRes) => {
+                  if (userRes.data && userRes.data.code === 1 && userRes.data.data) {
+                    task.publisher = {
+                      avatar: userRes.data.data.avatarUrl || '/images/default-avatar.png',
+                      nickname: userRes.data.data.username || `用户${task.userId}`
+                    };
+                  }
+                  resolve(task);
+                },
+                fail: () => {
+                  resolve(task);
+                }
+              });
+            });
+          })).then(hotTasksWithUser => {
+            this.setData({
+              hotTasks: hotTasksWithUser
+            });
           });
         } else {
           console.error('获取热门任务失败:', res.data);
-          // 如果API请求失败，使用备用数据
           this.useBackupHotTasks();
         }
       },
       fail: (err) => {
         console.error('获取热门任务请求失败:', err);
-        // 如果API请求失败，使用备用数据
         this.useBackupHotTasks();
       }
     });

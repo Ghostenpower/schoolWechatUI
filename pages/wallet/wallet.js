@@ -1,43 +1,165 @@
+const app = getApp()
+
 Page({
   data: {
-    balance: 0.00,
-    transactions: [
-      {
-        id: 1,
-        type: 'recharge',
-        amount: 50.00,
-        status: 'success',
-        time: '2024-03-20 14:30:00',
-        desc: '充值'
-      },
-      {
-        id: 2,
-        type: 'payment',
-        amount: -20.00,
-        status: 'success',
-        time: '2024-03-19 09:15:00',
-        desc: '支付跑腿费'
-      }
-    ]
+    balance: '0.00',
+    transactions: [],
+    showRechargeModal: false,
+    rechargeAmount: ''
   },
 
   onLoad() {
-    // TODO: 获取钱包余额和交易记录
+    const userInfo = wx.getStorageSync('userInfo');
+    if (userInfo && userInfo.userId) {
+      wx.request({
+        url: `${app.globalData.baseUrl}/api/users/getOneById?userId=${userInfo.userId}`,
+        method: 'GET',
+        header: {
+          'token': wx.getStorageSync('token')
+        },
+        success: (res) => {
+          if (res.data.code === 1 && res.data.data) {
+            const balance = (res.data.data.balance || 0).toFixed(2);
+            this.setData({ balance });
+          } else {
+            wx.showToast({ title: res.data.msg || '获取失败', icon: 'none' });
+          }
+        },
+        fail: () => {
+          wx.showToast({ title: '网络错误', icon: 'none' });
+        }
+      });
+    } else {
+      this.setData({ balance: '0.00' });
+    }
   },
 
+  // 加载钱包信息
+  async loadWalletInfo() {
+    try {
+      const res = await wx.request({
+        url: `http://localhost:8051/api/wallet/info`,
+        method: 'GET',
+        header: {
+          'Authorization': wx.getStorageSync('token')
+        }
+      })
+
+      if (res.statusCode === 200) {
+        this.setData({
+          balance: res.data.data.balance,
+          transactions: res.data.data.transactions.map(item => ({
+            ...item,
+            createTime: this.formatTime(item.createTime)
+          }))
+        })
+      }
+    } catch (error) {
+      wx.showToast({
+        title: '加载失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 格式化时间
+  formatTime(dateStr) {
+    const date = new Date(dateStr)
+    const year = date.getFullYear()
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    const hour = date.getHours().toString().padStart(2, '0')
+    const minute = date.getMinutes().toString().padStart(2, '0')
+    return `${year}-${month}-${day} ${hour}:${minute}`
+  },
+
+  // 打开充值弹窗
   onRecharge() {
-    wx.navigateTo({
-      url: '/pages/wallet/recharge/index'
+    this.setData({
+      showRechargeModal: true,
+      rechargeAmount: ''
     })
   },
 
+  // 关闭充值弹窗
+  closeRechargeModal() {
+    this.setData({
+      showRechargeModal: false
+    })
+  },
+
+  // 充值金额输入
+  onRechargeInput(e) {
+    this.setData({
+      rechargeAmount: e.detail.value
+    })
+  },
+
+  // 选择快捷金额
+  selectAmount(e) {
+    const amount = e.currentTarget.dataset.amount
+    this.setData({
+      rechargeAmount: amount
+    })
+  },
+
+  // 确认充值
+  async confirmRecharge() {
+    const amount = parseFloat(this.data.rechargeAmount)
+    if (!amount || amount <= 0) {
+      wx.showToast({
+        title: '请输入有效金额',
+        icon: 'none'
+      })
+      return
+    }
+
+    try {
+      const res = await wx.request({
+        url: `http://localhost:8051/api/wallet/recharge`,
+        method: 'POST',
+        data: {
+          amount: amount
+        },
+        header: {
+          'Authorization': wx.getStorageSync('token')
+        }
+      })
+
+      if (res.statusCode === 200) {
+        wx.showToast({
+          title: '充值成功',
+          icon: 'success'
+        })
+        this.closeRechargeModal()
+        this.loadWalletInfo()
+      } else {
+        throw new Error('充值失败')
+      }
+    } catch (error) {
+      wx.showToast({
+        title: '充值失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 提现
   onWithdraw() {
     wx.navigateTo({
       url: '/pages/wallet/withdraw/index'
     })
   },
 
-  formatAmount(amount) {
-    return amount.toFixed(2)
+  // 查看全部交易记录
+  viewAllTransactions() {
+    wx.navigateTo({
+      url: '/pages/wallet/transactions/index'
+    })
+  },
+
+  onPullDownRefresh() {
+    this.loadWalletInfo()
+    wx.stopPullDownRefresh()
   }
 }) 

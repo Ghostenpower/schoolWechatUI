@@ -1,6 +1,7 @@
 // pages/tasks/publish/index.js
 Page({
   data: {
+    taskId: null, // 新增：当前编辑的任务id，新增为null
     taskType: null, // 任务类型：1-快递代取，2-跑腿代办，3-代购服务，4-打印服务，5-其他服务
     formData: {
       title: '',
@@ -25,11 +26,15 @@ Page({
 
   onLoad(options) {
     wx.setNavigationBarTitle({
-      title: '发布任务'
+      title: options.taskId ? '编辑任务' : '发布任务'
     });
     
     // 初始化截止日期选择器
     this.initDeadlinePicker();
+    if (options.taskId) {
+      this.setData({ taskId: options.taskId });
+      this.fetchTaskDetail(options.taskId);
+    }
   },
   
   // 初始化截止日期选择器
@@ -301,47 +306,44 @@ Page({
       title: '上传中...',
       mask: true
     });
-    
-    // 注意：图片上传接口尚未实现，目前只是模拟上传
-    // TODO: 接入真实的图片上传API
-    /*
-    // 实际的图片上传流程
+
     const uploadPromises = tempFilePaths.map(path => {
       return new Promise((resolve, reject) => {
         wx.uploadFile({
-          url: 'http://localhost:8051/api/upload/image', // 替换为实际的上传API
+          url: 'http://localhost:8080/api/api/upload', // 修正后的后端接口
           filePath: path,
-          name: 'file',
+          name: 'file', // 字段名必须为file
           success: (res) => {
-            // 解析返回的JSON
             try {
               const data = JSON.parse(res.data);
               if (data.code === 1 && data.data) {
-                resolve(data.data.url);
+                resolve(data.data); // data.data为图片URL
               } else {
+                wx.showToast({ title: data.msg || '上传失败', icon: 'none' });
                 reject(new Error(data.msg || '上传失败'));
               }
             } catch (e) {
-              reject(new Error('解析响应失败'));
+              wx.showToast({ title: '响应解析失败', icon: 'none' });
+              reject(new Error('响应解析失败'));
             }
           },
           fail: () => {
+            wx.showToast({ title: '上传请求失败', icon: 'none' });
             reject(new Error('上传请求失败'));
           }
         });
       });
     });
-    */
-    
-    // 由于现在是模拟环境，我们使用原始路径作为上传成功的结果
-    // 在实际环境中应该使用 Promise.all(uploadPromises) 处理多图上传
-    setTimeout(() => {
-      const uploadedImages = [...this.data.uploadedImages, ...tempFilePaths];
-      this.setData({
-        uploadedImages
+
+    Promise.all(uploadPromises)
+      .then(urls => {
+        const uploadedImages = [...this.data.uploadedImages, ...urls];
+        this.setData({ uploadedImages });
+        wx.hideLoading();
+      })
+      .catch(() => {
+        wx.hideLoading();
       });
-      wx.hideLoading();
-    }, 1000);
   },
 
   // 预览图片
@@ -360,6 +362,64 @@ Page({
     uploadedImages.splice(index, 1);
     this.setData({
       uploadedImages
+    });
+  },
+
+  // 新增：获取任务详情并填充表单
+  fetchTaskDetail(taskId) {
+    const app = getApp();
+    const baseUrl = app.globalData.baseUrl;
+    const token = wx.getStorageSync('token');
+    wx.showLoading({ title: '加载中...' });
+    wx.request({
+      url: baseUrl + '/api/tasks/getOneById',
+      method: 'GET',
+      header: { 'token': token },
+      data: { taskId },
+      success: (res) => {
+        wx.hideLoading();
+        if (res.data.code === 1 && res.data.data) {
+          const task = res.data.data;
+          // 解析截止时间
+          let deadlineIndex = [0, 12, 0];
+          let deadlineText = '';
+          let deadlineDate = '';
+          if (task.deadline) {
+            const d = new Date(task.deadline);
+            const now = new Date();
+            const dayDiff = Math.floor((d - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / (24*60*60*1000));
+            deadlineIndex = [dayDiff, d.getHours(), d.getMinutes()];
+            deadlineText = `${d.getMonth()+1}月${d.getDate()}日 ${d.getHours()}时:${d.getMinutes().toString().padStart(2,'0')}`;
+            deadlineDate = task.deadline;
+          }
+          this.setData({
+            taskType: task.taskType,
+            formData: {
+              title: task.title,
+              description: task.description,
+              pickupLocation: task.pickupLocation,
+              pickupCoordinates: task.pickupCoordinates,
+              deliveryLocation: task.deliveryLocation,
+              deliveryCoordinates: task.deliveryCoordinates,
+              deadline: deadlineText,
+              deadlineDate: deadlineDate,
+              reward: task.reward,
+              remark: task.remark
+            },
+            titleLength: task.title ? task.title.length : 0,
+            descriptionLength: task.description ? task.description.length : 0,
+            remarkLength: task.remark ? task.remark.length : 0,
+            uploadedImages: task.imagesUrl ? task.imagesUrl.split(',') : [],
+            deadlineIndex
+          });
+        } else {
+          wx.showToast({ title: res.data.msg || '加载失败', icon: 'none' });
+        }
+      },
+      fail: () => {
+        wx.hideLoading();
+        wx.showToast({ title: '网络错误', icon: 'none' });
+      }
     });
   },
 
@@ -405,6 +465,7 @@ Page({
     
     // 准备提交数据
     const submitData = {
+      taskId: this.data.taskId, // 新增：编辑时带上taskId
       taskType: this.data.taskType,
       title: formData.title,
       description: formData.description,
@@ -415,8 +476,8 @@ Page({
       deadline: formData.deadlineDate, // ISO格式的日期字符串
       reward: parseFloat(formData.reward),
       remark: formData.remark,
-      imagesUrl: this.data.uploadedImages.length > 0 ? this.data.uploadedImages.join(',') : '', // 图片URL以逗号分隔，允许为空
-      price: parseFloat(formData.reward) // 添加price参数，与reward保持一致
+      imagesUrl: this.data.uploadedImages.length > 0 ? this.data.uploadedImages.join(',') : '',
+      price: parseFloat(formData.reward)
     };
     
     // 提交表单
@@ -441,19 +502,7 @@ Page({
       header: {
         'token': token
       },
-      data: {
-        taskType: data.taskType,
-        title: data.title,
-        description: data.description,
-        pickupLocation: data.pickupLocation,
-        pickupCoordinates: data.pickupCoordinates || '',
-        deliveryLocation: data.deliveryLocation,
-        deliveryCoordinates: data.deliveryCoordinates || '',
-        deadline: data.deadline,
-        remark: data.remark,
-        imagesUrl: data.imagesUrl, // 注意：图片上传接口尚未实现
-        price: data.price
-      },
+      data: data,
       success: (res) => {
         wx.hideLoading();
         

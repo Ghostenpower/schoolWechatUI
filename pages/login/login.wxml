@@ -1,9 +1,28 @@
 <view class="login-container">
+    <view class="logo-container">
+        <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+        <text class="app-name">校园跑腿</text>
+    </view>
+    
     <view class="form">
-        <input class="input" placeholder="请输入用户名" bindinput="onUsernameInput" />
-        <input class="input" password="true" placeholder="请输入密码" bindinput="onPasswordInput" />
+        <view class="input-group">
+            <image class="input-icon" src="/images/icons/user.png" mode="aspectFit"></image>
+            <input class="input" placeholder="请输入用户名" bindinput="onUsernameInput" value="{{username}}" />
+        </view>
+        <view class="input-group">
+            <image class="input-icon" src="/images/icons/password.png" mode="aspectFit"></image>
+            <input class="input" password="true" placeholder="请输入密码" bindinput="onPasswordInput" value="{{password}}" />
+        </view>
+        
+        <view class="remember-password">
+            <checkbox-group bindchange="onRememberChange">
+                <checkbox value="remember" checked="{{rememberPassword}}">记住密码</checkbox>
+            </checkbox-group>
+        </view>
+
         <button class="login-button" bindtap="login">登录</button>
     </view>
+
     <view class="register-link">
         <text>还没有账号？</text>
         <navigator url="/pages/register/register">立即注册</navigator>
