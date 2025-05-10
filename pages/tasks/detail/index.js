@@ -28,19 +28,27 @@ Page({
     const app = getApp();
     const token = wx.getStorageSync('token');
     const baseUrl = app.globalData.baseUrl;
+    const from = this.options?.from || '';
+
+    let url = '';
+    if (from === 'published') {
+      url = baseUrl + '/api/tasks/myPublic';
+    } else {
+      url = baseUrl + '/api/tasks/all';
+    }
 
     this.setData({ loading: true });
     wx.showLoading({ title: '加载中...' });
 
     wx.request({
-      url: baseUrl + '/api/tasks/all',
+      url: url,
       method: 'GET',
       header: { token },
       success: (res) => {
         wx.hideLoading();
-        if (res.data.code === 1 && res.data.data && Array.isArray(res.data.data.list)) {
-          // 使用通用获取列表接口并过滤
-          const apiList = res.data.data.list;
+        if (res.data.code === 1 && res.data.data && (Array.isArray(res.data.data.list) || Array.isArray(res.data.data))) {
+          // 兼容myPublic和all接口
+          const apiList = Array.isArray(res.data.data.list) ? res.data.data.list : res.data.data;
           const found = apiList.find(item => String(item.taskId) === String(taskId));
           if (found) {
             // 映射字段到页面所需格式
@@ -162,75 +170,57 @@ Page({
       success: (res) => {
         if (res.confirm) {
           wx.showLoading({ title: '处理中...' });
+          const baseUrl = app.globalData.baseUrl;
+          // 先获取courierId
           wx.request({
-            url: `${app.globalData.baseUrl}/api/tasks/acceptTask?taskId=${taskId}`,
-            method: 'POST',
-            header: {
-              'token': token
-            },
-            success: (res) => {
-              wx.hideLoading();
-              if (res.data && res.data.code === 1) {
-                wx.showToast({
-                  title: '接单成功',
-                  icon: 'success'
-                });
-
-                // 立即更新当前任务状态为"进行中"，显示"完成任务"按钮
-                this.setData({
-                  'task.status': 'accepted'
-                });
-
-                // 跳转到"我的任务"页面的"我接收的"tab栏
-                wx.navigateTo({
-                  url: '/pages/tasks/my/index',
-                  success: function() {
-                    // 切换tab后设置activeTab为'received'
-                    const page = getCurrentPages().find(p => p.route.indexOf('tasks/my/index') !== -1);
-                    if (page) {
-                      page.setData({ activeTab: 'received' });
-                      page.refreshTasks && page.refreshTasks();
+            url: `${baseUrl}/api/couriers/getCourierId`,
+            method: 'GET',
+            header: { 'token': token },
+            success: (courierRes) => {
+              if (courierRes.data && courierRes.data.code === 1 && courierRes.data.data) {
+                const courierId = courierRes.data.data;
+                // 再调用接单API
+                console.log('准备请求 /api/orders/add', { taskId, courierId });
+                wx.request({
+                  url: `${baseUrl}/api/orders/add`,
+                  method: 'POST',
+                  header: { 'token': token, 'content-type': 'application/json' },
+                  data: { taskId, courierId },
+                  success: (res) => {
+                    console.log('/api/orders/add 响应:', res);
+                    wx.hideLoading();
+                    if (res.data && res.data.code === 1) {
+                      wx.showToast({
+                        title: '接单成功',
+                        icon: 'success'
+                      });
+                      this.setData({ 'task.status': 'accepted', showCompleteBtn: false, successTip: '接单成功，可在"我的订单"处完成任务' });
+                      wx.setStorageSync('shouldRefreshList', true);
+                    } else {
+                      wx.showToast({
+                        title: res.data.msg || '接单失败',
+                        icon: 'none'
+                      });
                     }
+                  },
+                  fail: () => {
+                    wx.hideLoading();
+                    wx.showToast({ title: '网络请求失败', icon: 'none' });
                   }
                 });
               } else {
-                wx.showToast({
-                  title: res.data.msg || '接单失败',
-                  icon: 'none'
-                });
+                wx.hideLoading();
+                wx.showToast({ title: courierRes.data.msg || '获取快递员ID失败', icon: 'none' });
               }
             },
-            fail: (err) => {
+            fail: () => {
               wx.hideLoading();
-              wx.showToast({
-                title: '网络请求失败',
-                icon: 'none'
-              });
+              wx.showToast({ title: '网络请求失败', icon: 'none' });
             }
           });
         }
       }
     });
-  },
-
-  // 完成任务
-  onCompleteTask() {
-    wx.showModal({
-      title: '完成任务',
-      content: '确认已完成任务吗？',
-      success: (res) => {
-        if (res.confirm) {
-          // TODO: 调用完成任务接口
-          const task = this.data.task
-          task.status = 'completed'
-          this.setData({ task })
-          wx.showToast({
-            title: '任务已完成',
-            icon: 'success'
-          })
-        }
-      }
-    })
   },
 
   // 联系TA，支持电话联系和在线联系

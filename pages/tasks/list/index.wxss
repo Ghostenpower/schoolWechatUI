@@ -127,23 +127,23 @@
 }
 
 .task-tag.express {
-  background-color: #27BA9B;
+  background-color: #36cfc9; /* 青绿色，快递 */
 }
 
 .task-tag.errand {
-  background-color: #ff8f1f;
+  background-color: #ffb300; /* 明亮橙黄，跑腿 */
 }
 
 .task-tag.shopping {
-  background-color: #ff4d4f;
+  background-color: #f759ab; /* 粉红，代购 */
 }
 
 .task-tag.print {
-  background-color: #646eff;
+  background-color: #40a9ff; /* 天蓝，打印 */
 }
 
 .task-tag.other {
-  background-color: #8c8c8c;
+  background-color: #b37feb; /* 淡紫，其他 */
 }
 
 /* 任务标题 */

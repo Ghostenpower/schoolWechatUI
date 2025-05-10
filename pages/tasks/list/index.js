@@ -63,6 +63,21 @@ Page({
   },
 
   /**
+   * 生命周期函数--监听页面显示
+   */
+  onShow: function () {
+    if (wx.getStorageSync('shouldRefreshList')) {
+      wx.setStorageSync('shouldRefreshList', false);
+      this.setData({
+        page: 1,
+        tasks: [],
+        hasMore: true
+      });
+      this.loadTasks();
+    }
+  },
+
+  /**
    * 加载任务数据
    */
   loadTasks: function (isRefresh = false) {
@@ -86,6 +101,10 @@ Page({
     wx.request({
       url: baseUrl + '/api/tasks/all',
       method: 'GET',
+      data: {
+        pageNum: this.data.page,
+        pageSize: this.data.pageSize
+      },
       header: {
         'token': token
       },
@@ -99,7 +118,27 @@ Page({
           if (this.data.currentCategory && this.data.currentCategory !== 'all') {
             filteredTasks = formattedTasks.filter(task => task.type === this.data.currentCategory);
           }
-          filteredTasks = filteredTasks.filter(task => task.status === 'pending');
+          const now = new Date();
+          filteredTasks = filteredTasks.filter(task => {
+            let deadline = task.deadline;
+            if (typeof deadline === 'string' && deadline.indexOf('月') > -1) {
+              // 兼容"11月15日 14:30"格式
+              const match = deadline.match(/(\d+)月(\d+)日 (\d+):(\d+)/);
+              if (match) {
+                const month = parseInt(match[1], 10) - 1;
+                const day = parseInt(match[2], 10);
+                const hour = parseInt(match[3], 10);
+                const minute = parseInt(match[4], 10);
+                const year = new Date().getFullYear();
+                deadline = new Date(year, month, day, hour, minute);
+              } else {
+                deadline = now; // 解析失败，直接不过滤
+              }
+            } else {
+              deadline = new Date(deadline.replace(/-/g, '/'));
+            }
+            return task.status === 'pending' && deadline > now;
+          });
           const hasMore = this.data.tasks.length + filteredTasks.length < total;
 
           // 批量获取头像昵称
@@ -157,9 +196,23 @@ Page({
             });
           })).then(tasksWithUser => {
             console.log('批量用户信息合并后:', tasksWithUser);
+            let newTasks;
+            if (this.data.page === 1) {
+              newTasks = tasksWithUser;
+            } else {
+              // 只在末尾追加新数据，且用id去重，顺序不变
+              const idSet = new Set(this.data.tasks.map(item => item.id));
+              newTasks = [...this.data.tasks];
+              tasksWithUser.forEach(item => {
+                if (!idSet.has(item.id)) {
+                  newTasks.push(item);
+                }
+              });
+            }
+            const hasMore = newTasks.length < total;
             this.setData({
               loading: false,
-              tasks: [...this.data.tasks, ...tasksWithUser],
+              tasks: newTasks,
               hasMore: hasMore
             });
           });
@@ -325,66 +378,60 @@ Page({
    */
   onAcceptTask: function (e) {
     const id = e.currentTarget.dataset.id;
-    
     wx.showModal({
       title: '确认接单',
       content: '确定要接受这个任务吗？',
       success: (res) => {
         if (res.confirm) {
-          wx.showLoading({
-            title: '处理中...',
-          });
-          
+          wx.showLoading({ title: '处理中...' });
           const token = wx.getStorageSync('token');
-          console.log(id)
-          // 调用接单API
+          const baseUrl = getApp().globalData.baseUrl;
+          // 先获取courierId
           wx.request({
-            url: `http://localhost:8051/api/tasks/acceptTask?taskId=${id}`,
-            method: 'POST',
-            header: {
-              'token': token
-            },
-            success: (res) => {
-              wx.hideLoading();
-              
-              if (res.data.code === 1) {
-                // 更新本地任务状态
-                const tasks = this.data.tasks.map(task => {
-                  if (task.id === id) {
-                    return {
-                      ...task,
-                      status: 'accepted'
-                    };
+            url: `${baseUrl}/api/couriers/getCourierId`,
+            method: 'GET',
+            header: { 'token': token },
+            success: (courierRes) => {
+              if (courierRes.data && courierRes.data.code === 1 && courierRes.data.data) {
+                const courierId = courierRes.data.data;
+                console.log('准备请求 /api/orders/add', { taskId: id, courierId });
+                wx.request({
+                  url: `${baseUrl}/api/orders/add`,
+                  method: 'POST',
+                  header: { 'token': token, 'content-type': 'application/json' },
+                  data: { taskId: id, courierId },
+                  success: (res) => {
+                    console.log('/api/orders/add 响应:', res);
+                    wx.hideLoading();
+                    if (res.data.code === 1) {
+                      // 更新本地任务状态
+                      const tasks = this.data.tasks.map(task => {
+                        if (task.id === id) {
+                          return { ...task, status: 'accepted' };
+                        }
+                        return task;
+                      });
+                      this.setData({ tasks });
+                      wx.showToast({ title: '接单成功', icon: 'success' });
+                      wx.setStorageSync('myTaskActiveTab', 'received');
+                      wx.switchTab({ url: '/pages/tasks/my/index' });
+                    } else {
+                      wx.showToast({ title: res.data.msg || '接单失败', icon: 'none' });
+                    }
+                  },
+                  fail: () => {
+                    wx.hideLoading();
+                    wx.showToast({ title: '网络请求失败', icon: 'none' });
                   }
-                  return task;
-                });
-                
-                this.setData({
-                  tasks: tasks
-                });
-                
-                wx.showToast({
-                  title: '接单成功',
-                  icon: 'success'
-                });
-
-                wx.setStorageSync('myTaskActiveTab', 'received');
-                wx.switchTab({
-                  url: '/pages/tasks/my/index'
                 });
               } else {
-                wx.showToast({
-                  title: res.data.msg || '接单失败',
-                  icon: 'none'
-                });
+                wx.hideLoading();
+                wx.showToast({ title: courierRes.data.msg || '获取快递员ID失败', icon: 'none' });
               }
             },
-            fail: (err) => {
+            fail: () => {
               wx.hideLoading();
-              wx.showToast({
-                title: '网络请求失败',
-                icon: 'none'
-              });
+              wx.showToast({ title: '网络请求失败', icon: 'none' });
             }
           });
         }
@@ -396,6 +443,11 @@ Page({
    * 页面相关事件处理函数--监听用户下拉动作
    */
   onPullDownRefresh: function () {
+    this.setData({
+      page: 1,
+      tasks: [],
+      hasMore: true
+    });
     this.loadTasks(true);
     wx.stopPullDownRefresh();
   },
