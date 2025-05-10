@@ -474,19 +474,23 @@
 }
 
 .hot-task-tag.express {
-  background-color: #27BA9B;
+  background-color: #36cfc9;
 }
 
 .hot-task-tag.errand {
-  background-color: #ff8f1f;
+  background-color: #ffb300;
 }
 
 .hot-task-tag.shopping {
-  background-color: #ff4d4f;
+  background-color: #f759ab;
+}
+
+.hot-task-tag.print {
+  background-color: #40a9ff;
 }
 
 .hot-task-tag.other {
-  background-color: #8c8c8c;
+  background-color: #b37feb;
 }
 
 .hot-task-desc {

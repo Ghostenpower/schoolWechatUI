@@ -1,19 +1,19 @@
 <!--pages/tasks/my/index.wxml-->
 <view class="container">
-  <!-- 任务类型切换 -->
+  <!-- 分类tab栏 -->
   <view class="task-tabs">
-    <view class="tab {{activeTab === 'published' ? 'active' : ''}}" bindtap="switchTab" data-tab="published">
-      我发布的
-    </view>
-    <view class="tab {{activeTab === 'received' ? 'active' : ''}}" bindtap="switchTab" data-tab="received">
-      我接收的
-    </view>
+    <view class="tab {{activeTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-tab="all">全部</view>
+    <view class="tab {{activeTab === 'pending' ? 'active' : ''}}" bindtap="switchTab" data-tab="pending">待接单</view>
+    <view class="tab {{activeTab === 'accepted' ? 'active' : ''}}" bindtap="switchTab" data-tab="accepted">已接单</view>
+    <view class="tab {{activeTab === 'in_progress' ? 'active' : ''}}" bindtap="switchTab" data-tab="in_progress">进行中</view>
+    <view class="tab {{activeTab === 'completed' ? 'active' : ''}}" bindtap="switchTab" data-tab="completed">已完成</view>
+    <view class="tab {{activeTab === 'cancelled' ? 'active' : ''}}" bindtap="switchTab" data-tab="cancelled">已取消</view>
   </view>
 
   <!-- 任务列表 -->
   <view class="task-list">
-    <block wx:if="{{tasks.length > 0}}">
-      <view class="task-item" wx:for="{{tasks}}" wx:key="id" bindtap="onTaskTap" data-task="{{item}}">
+    <block wx:if="{{filteredTasks.length > 0}}">
+      <view class="task-item" wx:for="{{filteredTasks}}" wx:key="id" bindtap="onTaskTap" data-task="{{item}}">
         <view class="task-header">
           <text class="task-title">{{item.title}}</text>
           <text class="task-status status-{{item.status}}">{{item.statusText}}</text>
@@ -27,29 +27,21 @@
         </view>
         <view class="task-footer">
           <view class="task-actions">
-            <button wx:if="{{showEditDelete && item.status === 'pending'}}" 
+            <button wx:if="{{showEditDelete && (item.status === 'pending' || item.status === 'accepted')}}" 
                     class="action-btn edit" 
                     catchtap="onEditTask" 
                     data-id="{{item.id}}">编辑</button>
-            <button wx:if="{{showEditDelete && item.status === 'pending'}}" 
+            <button wx:if="{{showEditDelete && (item.status === 'pending' || item.status === 'accepted')}}" 
                     class="action-btn delete" 
                     catchtap="onDeleteTask" 
                     data-id="{{item.id}}">取消</button>
-            <button wx:if="{{showEditDelete && item.status === 'in_progress'}}" 
-                    class="action-btn complete" 
-                    catchtap="onCompleteTask" 
-                    data-id="{{item.id}}">确认完成</button>
-            <button wx:if="{{!showEditDelete && item.status === 'in_progress'}}" 
-                    class="action-btn submit" 
-                    catchtap="onSubmitTask" 
-                    data-id="{{item.id}}">提交完成</button>
           </view>
         </view>
       </view>
     </block>
     <view wx:else class="empty-state">
       <image src="/images/empty-task.png" mode="aspectFit"></image>
-      <text>暂无{{activeTab === 'published' ? '发布' : '接收'}}的任务</text>
+      <text>暂无发布的任务</text>
     </view>
   </view>
 </view>

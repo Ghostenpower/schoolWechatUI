@@ -7,8 +7,9 @@ Page({
    * 页面的初始数据
    */
   data: {
-    activeTab: 'published', // published 或 received
+    activeTab: 'all', // 默认显示全部
     tasks: [],
+    filteredTasks: [], // 新增：用于页面展示的筛选后任务
     loading: false,
     page: 1,
     hasMore: true
@@ -75,14 +76,29 @@ Page({
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab
     if (tab === this.data.activeTab) return
-
     this.setData({
-      activeTab: tab,
-      tasks: [],
-      page: 1,
-      hasMore: true
+      activeTab: tab
     })
-    this.loadTasks()
+    this.filterTasks()
+  },
+
+  // 新增：筛选任务
+  filterTasks() {
+    let filtered = [];
+    if (this.data.activeTab === 'all') {
+      filtered = this.data.tasks;
+    } else {
+      // tab与status的映射
+      const statusMap = {
+        pending: 'pending',
+        accepted: 'accepted',
+        in_progress: 'in_progress',
+        completed: 'completed',
+        cancelled: 'cancelled'
+      };
+      filtered = this.data.tasks.filter(t => t.status === statusMap[this.data.activeTab]);
+    }
+    this.setData({ filteredTasks: filtered });
   },
 
   // 加载任务列表
@@ -90,18 +106,9 @@ Page({
     if (this.data.loading || !this.data.hasMore) return
 
     this.setData({ loading: true })
-    let url = '';
-    let from = '';
-    let showEditDelete = false;
-    if (this.data.activeTab === 'published') {
-      url = `${app.globalData.baseUrl}/api/tasks/myPublic`;
-      from = 'published';
-      showEditDelete = true;
-    } else {
-      url = `${app.globalData.baseUrl}/api/tasks/myAccept`;
-      from = 'received';
-      showEditDelete = false;
-    }
+    let url = `${app.globalData.baseUrl}/api/tasks/myPublic`;
+    let from = 'published';
+    let showEditDelete = true;
 
     wx.request({
       url,
@@ -217,6 +224,8 @@ Page({
               page: this.data.page + 1,
               hasMore: hasMore,
               showEditDelete: showEditDelete
+            }, () => {
+              this.filterTasks();
             })
           });
         } else {
@@ -253,10 +262,11 @@ Page({
   // 获取任务状态
   getTaskStatus(status) {
     const statusMap = {
-      0: 'pending',
-      1: 'in_progress',
-      2: 'completed',
-      3: 'cancelled'
+      0: 'pending',      // 待接单
+      1: 'accepted',     // 已接单
+      2: 'in_progress',  // 进行中
+      3: 'completed',    // 已完成
+      4: 'cancelled'     // 已取消
     }
     return statusMap[status] || 'pending'
   },
@@ -265,9 +275,10 @@ Page({
   getStatusText(status) {
     const statusMap = {
       0: '待接单',
-      1: '进行中',
-      2: '已完成',
-      3: '已取消'
+      1: '已接单',
+      2: '进行中',
+      3: '已完成',
+      4: '已取消'
     }
     return statusMap[status] || '未知状态'
   },

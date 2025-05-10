@@ -73,12 +73,12 @@
     </view>
 
     <!-- 底部操作 -->
-    <view class="footer-actions" wx:if="{{showCompleteBtn}}">
-      <block wx:if="{{task.status==='pending'}}">
-        <button class="btn primary" bindtap="onAcceptTask">接受任务</button>
+    <view class="footer-actions" wx:if="{{showCompleteBtn || successTip}}">
+      <block wx:if="{{successTip}}">
+        <view class="success-tip">{{successTip}}</view>
       </block>
-      <block wx:elif="{{task.status==='accepted'}}">
-        <button class="btn primary" bindtap="onCompleteTask">提交完成</button>
+      <block wx:elif="{{task.status==='pending'}}">
+        <button class="btn primary" bindtap="onAcceptTask">接受任务</button>
       </block>
     </view>
   </block>
