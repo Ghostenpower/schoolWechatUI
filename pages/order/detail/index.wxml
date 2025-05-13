@@ -1,10 +1,9 @@
-<!--pages/order/detail/index.wxml-->
+<!-- pages/order/detail/index.wxml -->
 <view class="container">
   <view class="loading-container" wx:if="{{loading}}">
     <view class="loading"></view>
     <view class="loading-text">加载中...</view>
   </view>
-
   <block wx:else>
     <!-- 订单基本信息 -->
     <view class="order-header">
@@ -15,7 +14,6 @@
         </view>
       </view>
     </view>
-
     <!-- 任务详情 -->
     <view class="section">
       <view class="section-header">
@@ -24,11 +22,15 @@
       <view class="section-content">
         <view class="info-row">
           <text class="label">取件地点：</text>
-          <text class="value clickable" bindtap="onViewPickupLocation">{{taskInfo.pickupLocation || '暂无'}}</text>
+          <text class="value clickable" bindtap="onViewPickupLocation">
+            {{taskInfo.pickupLocation || '暂无'}}
+          </text>
         </view>
         <view class="info-row">
           <text class="label">送达地点：</text>
-          <text class="value clickable" bindtap="onViewDeliveryLocation">{{taskInfo.deliveryLocation || '暂无'}}</text>
+          <text class="value clickable" bindtap="onViewDeliveryLocation">
+            {{taskInfo.deliveryLocation || '暂无'}}
+          </text>
         </view>
         <view class="info-row">
           <text class="label">截止时间：</text>
@@ -36,7 +38,9 @@
         </view>
         <view class="info-row">
           <text class="label">任务类型：</text>
-          <text class="value">{{taskInfo.taskType === 0 ? '外卖代取' : taskInfo.taskType === 1 ? '快递代取' : '其他'}}</text>
+          <text class="value">
+            {{taskInfo.taskType === 0 ? '外卖代取' : taskInfo.taskType === 1 ? '快递代取' : '其他'}}
+          </text>
         </view>
         <view class="info-row">
           <text class="label">任务报酬：</text>
@@ -52,7 +56,6 @@
         </view>
       </view>
     </view>
-
     <!-- 任务发布者信息 -->
     <view class="section">
       <view class="section-header">
@@ -65,13 +68,19 @@
             <text class="username">{{customerInfo.username || '未知用户'}}</text>
             <text class="user-phone" wx:if="{{customerInfo.phone}}">{{customerInfo.phone}}</text>
           </view>
+        </view>
+        <view class="contact-buttons">
           <button class="action-btn call-btn" bindtap="onCallPhone" data-phone="{{customerInfo.phone}}" wx:if="{{customerInfo.phone}}">
-            <text class="icon">📞</text> 拨打电话
+            <text class="icon">📞</text>
+            电话联系
+          </button>
+          <button class="action-btn chat-btn" bindtap="onStartChat" data-userid="{{taskInfo.userId}}">
+            <text class="icon">💬</text>
+            在线联系
           </button>
         </view>
       </view>
     </view>
-
     <!-- 订单信息 -->
     <view class="section">
       <view class="section-header">
@@ -100,43 +109,30 @@
         </view>
       </view>
     </view>
-
     <!-- 状态标识 -->
     <view class="status-tips" wx:if="{{orderInfo.orderStatus === 2}}">
       <view class="status-icon completed">✓</view>
       <view class="status-text">订单已完成</view>
       <view class="status-desc">感谢您的使用，期待再次为您服务</view>
     </view>
-
     <view class="status-tips" wx:if="{{orderInfo.orderStatus === 3}}">
       <view class="status-icon cancelled">✕</view>
       <view class="status-text">订单已取消</view>
       <view class="status-desc">{{orderInfo.cancelReason || '用户主动取消'}}</view>
     </view>
-
     <!-- 操作按钮 -->
     <view class="bottom-actions" wx:if="{{orderInfo.orderStatus === 1}}">
       <view class="action-wrapper">
         <text class="cancel-link" bindtap="onCancelOrder">取消订单</text>
-        <button 
-          class="btn primary-btn" 
-          bindtap="onConfirmComplete"
-          hover-class="btn-hover"
-        >
-          <text class="btn-icon">✓</text> 确认完成
+        <button class="btn primary-btn" bindtap="onConfirmComplete" hover-class="btn-hover">
+          <text class="btn-icon">✓</text>
+          确认完成
         </button>
       </view>
     </view>
-
     <!-- 订单已完成/取消时的底部按钮 -->
     <view class="bottom-actions" wx:if="{{orderInfo.orderStatus !== 1}}">
-      <button 
-        class="btn back-btn" 
-        bindtap="onBackToList"
-        hover-class="btn-hover"
-      >
-        返回订单列表
-      </button>
+      <button class="btn back-btn" bindtap="onBackToList" hover-class="btn-hover">返回订单列表</button>
     </view>
   </block>
-</view> 
+</view>

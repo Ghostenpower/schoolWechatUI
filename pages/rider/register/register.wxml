@@ -1,0 +1,53 @@
+<!--pages/rider/register/register.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">注册骑手</text>
+  </view>
+
+  <view class="form">
+    <!-- 身份证号输入 -->
+    <view class="form-item">
+      <text class="label">身份证号</text>
+      <input class="input" type="idcard" model:value="{{idCard}}" placeholder="请输入身份证号"/>
+    </view>
+
+    <!-- 身份证正面照片 -->
+    <view class="form-item">
+      <text class="label">身份证正面照片</text>
+      <view class="upload-box" bindtap="chooseImage" data-type="idCardFront">
+        <image wx:if="{{idCardFront}}" class="upload-image" src="{{idCardFront}}" mode="aspectFit"/>
+        <view wx:else class="upload-placeholder">
+          <image class="upload-icon" src="/images/icons/upload.png" mode="aspectFit"/>
+          <text>点击上传</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 身份证反面照片 -->
+    <view class="form-item">
+      <text class="label">身份证反面照片</text>
+      <view class="upload-box" bindtap="chooseImage" data-type="idCardBack">
+        <image wx:if="{{idCardBack}}" class="upload-image" src="{{idCardBack}}" mode="aspectFit"/>
+        <view wx:else class="upload-placeholder">
+          <image class="upload-icon" src="/images/icons/upload.png" mode="aspectFit"/>
+          <text>点击上传</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 学生证照片 -->
+    <view class="form-item">
+      <text class="label">学生证照片</text>
+      <view class="upload-box" bindtap="chooseImage" data-type="studentCard">
+        <image wx:if="{{studentCard}}" class="upload-image" src="{{studentCard}}" mode="aspectFit"/>
+        <view wx:else class="upload-placeholder">
+          <image class="upload-icon" src="/images/icons/upload.png" mode="aspectFit"/>
+          <text>点击上传</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 提交按钮 -->
+    <button class="submit-btn" bindtap="submitForm">提交申请</button>
+  </view>
+</view> 

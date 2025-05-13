@@ -28,31 +28,6 @@ Page({
 
     // 获取用户统计数据
     this.getUserStats()
-
-    const orderCount = app.globalData.orderCount || 0;
-    const userInfo = wx.getStorageSync('userInfo');
-    if (userInfo && userInfo.userId) {
-      wx.request({
-        url: `${app.globalData.baseUrl}/api/users/getOneById?userId=${userInfo.userId}`,
-        method: 'GET',
-        header: {
-          'token': wx.getStorageSync('token')
-        },
-        success: (res) => {
-          if (res.data.code === 1 && res.data.data) {
-            const balance = (res.data.data.balance || 0).toFixed(2);
-            this.setData({ 'stats.orderCount': orderCount, 'stats.balance': balance });
-          } else {
-            wx.showToast({ title: res.data.msg || '获取失败', icon: 'none' });
-          }
-        },
-        fail: () => {
-          wx.showToast({ title: '网络错误', icon: 'none' });
-        }
-      });
-    } else {
-      this.setData({ 'stats.orderCount': orderCount, 'stats.balance': '0.00' });
-    }
   },
 
   refreshData() {
@@ -129,7 +104,7 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow() {
-
+    this.refreshData();
   },
 
   /**
@@ -176,15 +151,69 @@ Page({
 
   // 获取用户统计数据
   getUserStats() {
-    // TODO: 调用后端接口获取用户统计数据
-    // wx.request({
-    //   url: `${app.globalData.baseUrl}/api/user/stats`,
-    //   success: (res) => {
-    //     this.setData({
-    //       stats: res.data
-    //     })
-    //   }
-    // })
+    const userInfo = wx.getStorageSync('userInfo');
+    if (!userInfo || !userInfo.userId) {
+      this.setData({
+        'stats.orderCount': 0,
+        'stats.balance': '0.00'
+      });
+      return;
+    }
+
+    // 获取订单数量
+    wx.request({
+      url: `${app.globalData.baseUrl}/api/orders/getOrderCountByUser`,
+      method: 'GET',
+      header: {
+        'token': wx.getStorageSync('token')
+      },
+      success: (res) => {
+        if (res.data.code === 1) {
+          this.setData({
+            'stats.orderCount': res.data.data || 0
+          });
+        } else {
+          console.error('获取订单数量失败:', res.data.msg);
+          this.setData({
+            'stats.orderCount': 0
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('获取订单数量请求失败:', err);
+        this.setData({
+          'stats.orderCount': 0
+        });
+      }
+    });
+
+    // 获取用户余额
+    wx.request({
+      url: `${app.globalData.baseUrl}/api/users/getOneById?userId=${userInfo.userId}`,
+      method: 'GET',
+      header: {
+        'token': wx.getStorageSync('token')
+      },
+      success: (res) => {
+        if (res.data.code === 1 && res.data.data) {
+          const balance = (res.data.data.balance || 0).toFixed(2);
+          this.setData({
+            'stats.balance': balance
+          });
+        } else {
+          console.error('获取用户余额失败:', res.data.msg);
+          this.setData({
+            'stats.balance': '0.00'
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('获取用户余额请求失败:', err);
+        this.setData({
+          'stats.balance': '0.00'
+        });
+      }
+    });
   },
 
   // 页面跳转
@@ -226,6 +255,13 @@ Page({
   onNavigateToMyOrders() {
     wx.navigateTo({
       url: '/pages/order/myorder/myorder'
+    })
+  },
+
+  // 跳转到注册骑手页面
+  onNavigateToRiderRegister() {
+    wx.navigateTo({
+      url: '/pages/rider/register/register'
     })
   }
 })

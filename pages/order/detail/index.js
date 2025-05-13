@@ -231,8 +231,11 @@ Page({
       success: (res) => {
         console.log('客户信息API响应:', res.data);
         if (res.data.code === 1 && res.data.data) {
+          // 确保用户ID被正确设置
+          const userData = res.data.data;
+          userData.id = userData.id || customerId; // 确保id字段存在
           this.setData({
-            customerInfo: res.data.data
+            customerInfo: userData
           });
         } else {
           wx.showToast({
@@ -486,6 +489,34 @@ Page({
         icon: 'none'
       });
     }
+  },
+
+  /**
+   * 开始在线聊天
+   */
+  onStartChat: function (e) {
+    const targetUserId = this.data.taskInfo.userId;
+    console.log('开始聊天，发布者ID:', targetUserId);
+    
+    if (!targetUserId) {
+      wx.showToast({
+        title: '用户信息不可用',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // 跳转到聊天详情页面
+    wx.navigateTo({
+      url: `/pages/chat/detail/index?targetId=${targetUserId}&orderId=${this.data.orderId}`,
+      fail: (err) => {
+        console.error('导航到聊天页面失败:', err);
+        wx.showToast({
+          title: '打开聊天失败',
+          icon: 'none'
+        });
+      }
+    });
   },
 
   /**

@@ -7,7 +7,10 @@
 .avatar-box {
   display: flex;
   justify-content: center;
+  align-items: center;
   margin-bottom: 40rpx;
+  flex-direction: column;
+  position: relative;
 }
 .avatar {
   width: 160rpx;
@@ -15,6 +18,11 @@
   border-radius: 50%;
   border: 4rpx solid #fff;
   box-shadow: 0 4rpx 24rpx #ddd;
+}
+.avatar-edit-hint {
+  font-size: 24rpx;
+  color: #666;
+  margin-top: 16rpx;
 }
 .info-card {
   background: #fff;

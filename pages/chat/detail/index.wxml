@@ -1,45 +1,44 @@
 <view class="chat-container">
-  <!-- 消息列表区域 -->
+  <!-- 聊天记录 -->
   <scroll-view 
-    class="message-list" 
+    class="chat-list" 
     scroll-y="true" 
-    bindscrolltoupper="onLoadMore"
-    scroll-into-view="{{lastMessageId}}"
+    scroll-into-view="{{scrollIntoView}}"
+    bindscrolltoupper="onScrollToUpper"
   >
-    <block wx:for="{{messages}}" wx:key="timestamp">
-      <view class="message-item {{item.isSelf ? 'self' : 'other'}}">
-        <image 
-          class="avatar" 
-          src="{{item.isSelf ? '/images/default-avatar.png' : otherUser.avatar}}"
-          mode="aspectFill"
-        />
-        <view class="message-content">
-          <view class="message-bubble">
-            {{item.content}}
-          </view>
-          <view class="message-time">
-            {{item.timestamp}}
-          </view>
-        </view>
+    <view 
+      class="chat-item {{item.senderId === userId ? 'self' : ''}}"
+      wx:for="{{messages}}"
+      wx:key="timestamp"
+      id="msg-{{index}}"
+    >
+      <image 
+        class="avatar" 
+        src="{{item.senderId === userId ? userInfo.avatarUrl : targetInfo.avatarUrl || '/static/default-avatar.png'}}"
+      />
+      <view class="message-content">
+        <view class="nickname">{{item.senderId === userId ? userInfo.username : targetInfo.username || '对方'}}</view>
+        <view class="message-bubble">{{item.content}}</view>
+        <view class="time">{{item.timeStr}}</view>
       </view>
-    </block>
+    </view>
   </scroll-view>
 
-  <!-- 输入区域 -->
+  <!-- 输入框区域 -->
   <view class="input-area">
     <input 
-      class="message-input" 
-      type="text" 
-      value="{{inputValue}}"
-      placeholder="输入消息..." 
-      bindinput="onInputChange"
+      class="message-input"
+      type="text"
+      value="{{inputMessage}}"
+      placeholder="请输入消息"
+      bindinput="onInputMessage"
+      bindconfirm="sendMessage"
       confirm-type="send"
-      bindconfirm="onSendMessage"
     />
     <button 
-      class="send-button" 
-      bindtap="onSendMessage"
-      disabled="{{!inputValue.trim()}}"
+      class="send-btn {{inputMessage.trim() ? '' : 'disabled'}}" 
+      bindtap="sendMessage"
+      disabled="{{!inputMessage}}"
     >发送</button>
   </view>
 </view> 

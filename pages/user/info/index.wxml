@@ -1,7 +1,8 @@
 <!--pages/user/info/index.wxml-->
 <view class="user-info-container">
-  <view class="avatar-box">
+  <view class="avatar-box" bindtap="changeAvatar">
     <image class="avatar" src="{{userInfo.avatarUrl || '/static/default-avatar.png'}}" />
+    <view class="avatar-edit-hint">点击修改头像</view>
   </view>
   <view class="info-card">
     <view class="info-item">用户名：{{userInfo.username}}</view>
