@@ -68,6 +68,13 @@
         <!-- 操作按钮 -->
         <view class="order-actions" wx:if="{{item.orderStatus === 1}}">
           <button 
+            class="action-btn start"
+            catchtap="onStartTask"
+            data-id="{{item.orderId}}"
+          >开始任务</button>
+        </view>
+        <view class="order-actions" wx:if="{{item.orderStatus === 2}}">
+          <button 
             class="action-btn complete"
             catchtap="onConfirmComplete"
             data-id="{{item.orderId}}"

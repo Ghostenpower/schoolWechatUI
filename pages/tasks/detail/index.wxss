@@ -31,7 +31,9 @@
 }
 .detail-status.pending { background-color: rgba(255,175,3,0.1); color: #ffaf03; }
 .detail-status.accepted { background-color: rgba(39,186,155,0.1); color: #27ba9b; }
-.detail-status.completed { background-color: rgba(140,140,140,0.15); color: #8c8c8c; }
+.detail-status.completed { background-color: rgba(39,186,155,0.1); color: #27ba9b; }
+.detail-status.in_progress { background-color: rgba(39,186,155,0.1); color: #27ba9b; }
+.detail-status.cancelled { background-color: rgba(255,77,79,0.08); color: #ff4d4f; }
 
 /* 通用区块卡片样式 */
 .section {

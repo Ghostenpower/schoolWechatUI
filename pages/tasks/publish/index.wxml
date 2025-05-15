@@ -77,7 +77,7 @@
         <view class="form-label">取件位置</view>
         <view class="form-input-wrap">
           <view wx:if="{{!showPickupInput}}" class="location-picker" bindtap="choosePickupLocation">
-            <text wx:if="{{!formData.pickupLocation}}">选择取件位置</text>
+            <text wx:if="{{!formData.pickupLocation}}" class="location-placeholder">选择取件位置</text>
             <text wx:else>{{formData.pickupLocation}}</text>
             <text class="location-icon iconfont icon-location"></text>
           </view>
@@ -94,7 +94,7 @@
         <view class="form-label">送达位置</view>
         <view class="form-input-wrap">
           <view wx:if="{{!showDeliveryInput}}" class="location-picker" bindtap="chooseDeliveryLocation">
-            <text wx:if="{{!formData.deliveryLocation}}">选择送达位置</text>
+            <text wx:if="{{!formData.deliveryLocation}}" class="location-placeholder">选择送达位置</text>
             <text wx:else>{{formData.deliveryLocation}}</text>
             <text class="location-icon iconfont icon-location"></text>
           </view>

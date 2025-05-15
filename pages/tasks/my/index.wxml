@@ -16,7 +16,13 @@
       <view class="task-item" wx:for="{{filteredTasks}}" wx:key="id" bindtap="onTaskTap" data-task="{{item}}">
         <view class="task-header">
           <text class="task-title">{{item.title}}</text>
-          <text class="task-status status-{{item.status}}">{{item.statusText}}</text>
+          <view class="detail-status {{item.status}}">
+            <text wx:if="{{item.status == 'pending'}}">等待接单</text>
+            <text wx:elif="{{item.status == 'accepted'}}">已接单</text>
+            <text wx:elif="{{item.status == 'in_progress'}}">进行中</text>
+            <text wx:elif="{{item.status == 'completed'}}">已完成</text>
+            <text wx:elif="{{item.status == 'cancelled'}}">已取消</text>
+          </view>
         </view>
         <view class="task-content">
           <text class="task-desc">{{item.description}}</text>

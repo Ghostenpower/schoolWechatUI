@@ -11,18 +11,19 @@ Component({
 
   data: {
     activeTab: 0,
-    tabs: ['全部', '进行中', '已完成', '已取消'],
+    tabs: ['全部', '待开始', '进行中', '已完成', '已取消'],
     orders: [],
     pageNum: 1,
     pageSize: 10,
     hasMore: true,
     loading: false,
-    // 订单状态映射 (0=全部,1=待完成,2=已完成,3=已取消)
+    // 订单状态映射 (0=全部,1=待开始,2=待完成,3=已完成,4=已取消)
     orderStatusMap: {
       0: '全部',
-      1: '待完成',
-      2: '已完成',
-      3: '已取消'
+      1: '待开始',
+      2: '待完成',
+      3: '已完成',
+      4: '已取消'
     },
     // 任务状态映射
     taskStatusMap: {
@@ -94,6 +95,23 @@ Component({
       }
     },
 
+    // 开始任务
+    onStartTask(e) {
+      const id = e.currentTarget.dataset.id;
+
+      wx.showModal({
+        title: '开始任务',
+        content: '确认开始该任务吗？',
+        confirmText: '确认开始',
+        confirmColor: '#07c160',
+        success: (res) => {
+          if (res.confirm) {
+            this._startOrder(id);
+          }
+        }
+      });
+    },
+
     // 加载订单列表
     loadOrders() {
       if (this.data.loading) return Promise.resolve();
@@ -105,6 +123,7 @@ Component({
         case 1: orderStatus = 1; break;
         case 2: orderStatus = 2; break;
         case 3: orderStatus = 3; break;
+        case 4: orderStatus = 4; break;
         default: orderStatus = 0;
       }
 
@@ -269,6 +288,48 @@ Component({
       const hour = date.getHours().toString().padStart(2, '0');
       const minute = date.getMinutes().toString().padStart(2, '0');
       return `${year}-${month}-${day} ${hour}:${minute}`;
+    },
+
+    // 开始订单
+    _startOrder(orderId) {
+      wx.showLoading({ title: '提交中...', mask: true });
+
+      wx.request({
+        url: 'http://localhost:8051/api/orders/start',
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/json',
+          'token': wx.getStorageSync('token')
+        },
+        data: Number(orderId),
+        success: (res) => {
+          wx.hideLoading();
+          if (res.data.code === 1) {
+            this._updateLocalOrderStatus(orderId, 2);
+            wx.showToast({
+              title: '任务已开始，请及时完成跑腿任务',
+              icon: 'none',
+              duration: 3000
+            });
+          } else if (res.data.code === 401) {
+            this.triggerEvent('authError');
+          } else {
+            wx.showToast({
+              title: res.data.msg || '操作失败',
+              icon: 'none',
+              duration: 2000
+            });
+          }
+        },
+        fail: (err) => {
+          wx.hideLoading();
+          wx.showToast({
+            title: '网络错误，请重试',
+            icon: 'none',
+            duration: 2000
+          });
+        }
+      });
     }
   }
 });
