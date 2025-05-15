@@ -65,7 +65,7 @@
   "lazyCodeLoading": "requiredComponents",
   "permission": {
     "scope.userLocation": {
-      "desc": "您的位置信息将用于选择收货地址"
+      "desc": "用于选择任务的取件和送达位置"
     }
   },
   "networkTimeout": {

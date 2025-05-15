@@ -269,4 +269,10 @@
 
 .submit-btn:active {
   opacity: 0.9;
+}
+
+.location-placeholder {
+  color: #bbb;
+  font-size: 28rpx;
+  margin-left: 10rpx;
 } 

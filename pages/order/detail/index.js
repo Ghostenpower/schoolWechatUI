@@ -15,9 +15,10 @@ Page({
     loading: true,
     // 订单状态映射
     orderStatusMap: {
-      1: '待完成',
-      2: '已完成',
-      3: '已取消'
+      1: '待开始',
+      2: '待完成',
+      3: '已完成',
+      4: '已取消'
     },
     // 任务状态映射
     taskStatusMap: {
@@ -704,5 +705,94 @@ Page({
         icon: 'none'
       });
     }
+  },
+
+  /**
+   * 开始任务
+   */
+  onStartTask: function () {
+    wx.showModal({
+      title: '开始任务',
+      content: '确认开始该任务吗？',
+      confirmText: '确认开始',
+      confirmColor: '#07c160',
+      success: (res) => {
+        if (res.confirm) {
+          // 显示加载中
+          wx.showLoading({
+            title: '提交中...',
+            mask: true
+          });
+          
+          // 获取订单ID
+          const orderId = Number(this.data.orderId);
+          
+          console.log('正在提交开始任务请求，orderId:', orderId);
+          
+          // 按照API文档格式发送请求
+          wx.request({
+            url: 'http://localhost:8051/api/orders/start',
+            method: 'POST',
+            header: {
+              'Content-Type': 'application/json',
+              'token': wx.getStorageSync('token')
+            },
+            data: orderId,
+            success: (res) => {
+              console.log('开始任务API响应:', res.data);
+              if (res.data.code === 1) {
+                // 先隐藏加载中
+                wx.hideLoading();
+                
+                // 本地更新状态
+                this.updateOrderStatus(2);
+                
+                // 展示成功动画
+                wx.showToast({
+                  title: '任务已开始，请及时完成跑腿任务',
+                  icon: 'none',
+                  duration: 3000
+                });
+                
+                // 等待动画完成后刷新数据
+                setTimeout(() => {
+                  // 刷新当前页面的订单详情
+                  this.loadOrderDetail(orderId);
+                  
+                  // 检查是否有上一页，并更新列表中的订单状态
+                  const pages = getCurrentPages();
+                  if (pages.length > 1) {
+                    const prevPage = pages[pages.length - 2];
+                    if (prevPage && prevPage.route.includes('order/order') && prevPage.updateLocalOrderStatus) {
+                      console.log('通知列表页更新订单状态:', orderId, 2);
+                      prevPage.updateLocalOrderStatus(orderId, 2);
+                    }
+                    else if (prevPage && prevPage.refreshOrders) {
+                      prevPage.refreshOrders();
+                    }
+                  }
+                }, 1500);
+              } else {
+                wx.hideLoading();
+                wx.showToast({
+                  title: res.data.msg || '操作失败',
+                  icon: 'none',
+                  duration: 2000
+                });
+              }
+            },
+            fail: (err) => {
+              console.error('开始任务请求失败:', err);
+              wx.hideLoading();
+              wx.showToast({
+                title: '网络错误，请重试',
+                icon: 'none',
+                duration: 2000
+              });
+            }
+          });
+        }
+      }
+    });
   }
 }) // 使用微信原生地图API - 需要火星坐标系(GCJ-02)

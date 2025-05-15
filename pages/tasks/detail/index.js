@@ -3,7 +3,12 @@ Page({
     task: null,
     loading: true,
     showPublisher: true,
-    showCompleteBtn: true
+    showCompleteBtn: true,
+    pickupLocationObj: null,
+    deliveryLocationObj: null,
+    mapMarkers: [],
+    includePoints: [],
+    polyline: [],
   },
 
   onLoad(options) {
@@ -21,6 +26,7 @@ Page({
     if (options.id) {
       this.fetchTaskDetail(options.id)
     }
+    this.parseTaskCoordinates(this.data.task);
   },
 
   // 获取任务详情
@@ -70,14 +76,19 @@ Page({
             t.rewardText = '¥ ' + t.reward.toFixed(2);
             // 状态映射
             switch (found.status) {
-              case 0: t.status = 'pending'; break;
-              case 1: t.status = 'accepted'; break;
-              case 2: t.status = 'completed'; break;
-              case 3: t.status = 'cancelled'; break;
+              case 0: t.status = 'pending'; break;      // 待接单
+              case 1: t.status = 'accepted'; break;     // 已接单
+              case 2: t.status = 'in_progress'; break;  // 进行中
+              case 3: t.status = 'completed'; break;    // 已完成
+              case 4: t.status = 'cancelled'; break;    // 已取消
               default: t.status = 'pending';
             }
+            
             t.location = found.pickupLocation || '未指定位置';
             t.destination = found.deliveryLocation || '';
+            // 新增：补充坐标字段
+            t.pickupCoordinates = found.pickupCoordinates || '';
+            t.deliveryCoordinates = found.deliveryCoordinates || '';
             // 格式化时间
             try {
               const d = new Date(found.deadline);
@@ -123,14 +134,18 @@ Page({
                     nickname: `用户${found.userId}`
                   };
                 }
-                this.setData({ task: t, loading: false });
+                this.setData({ task: t, loading: false }, () => {
+                  this.parseTaskCoordinates(t);
+                });
               },
               fail: () => {
                 t.publisher = {
                   avatar: '/images/default-avatar.png',
                   nickname: `用户${found.userId}`
                 };
-                this.setData({ task: t, loading: false });
+                this.setData({ task: t, loading: false }, () => {
+                  this.parseTaskCoordinates(t);
+                });
               }
             });
             console.log('当前用户ID:', wx.getStorageSync('userInfo')?.userId, '任务发布者ID:', found.userId);
@@ -278,5 +293,111 @@ Page({
         })
       }
     })
-  }
+  },
+
+  parseTaskCoordinates(data) {
+    const markers = [];
+    const includePoints = [];
+    let polyline = [];
+    let pickup = null, delivery = null;
+
+    if (data.pickupCoordinates) {
+      const [longitude, latitude] = data.pickupCoordinates.split(',').map(Number);
+      pickup = { longitude, latitude };
+      this.setData({ pickupLocationObj: pickup });
+      markers.push({
+        id: 1,
+        longitude,
+        latitude,
+        title: '取件点',
+        iconPath: '/images/pickup.png',
+        width: 32,
+        height: 32
+      });
+      includePoints.push({ longitude, latitude });
+    }
+    if (data.deliveryCoordinates) {
+      const [longitude, latitude] = data.deliveryCoordinates.split(',').map(Number);
+      delivery = { longitude, latitude };
+      this.setData({ deliveryLocationObj: delivery });
+      markers.push({
+        id: 2,
+        longitude,
+        latitude,
+        title: '送达点',
+        iconPath: '/images/delivery.png',
+        width: 32,
+        height: 32
+      });
+      includePoints.push({ longitude, latitude });
+    }
+
+    // 路线polyline和配送员marker
+    if (pickup && delivery) {
+      // 控制点，决定曲线弯曲方向和幅度
+      const control = {
+        longitude: (pickup.longitude + delivery.longitude) / 2 + 0.003, // 横向偏移
+        latitude: (pickup.latitude + delivery.latitude) / 2 - 0.003    // 纵向偏移
+      };
+      const N = 100; // 点数，越多越平滑
+      const routePoints = [];
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        // 二次贝塞尔曲线插值公式
+        const lng = (1 - t) * (1 - t) * pickup.longitude +
+                    2 * (1 - t) * t * control.longitude +
+                    t * t * delivery.longitude;
+        const lat = (1 - t) * (1 - t) * pickup.latitude +
+                    2 * (1 - t) * t * control.latitude +
+                    t * t * delivery.latitude;
+        routePoints.push({ longitude: lng, latitude: lat });
+      }
+
+      polyline = [{
+        points: routePoints,
+        color: '#27ba9b',
+        width: 6,
+        dottedLine: false
+      }];
+
+      // 配送员marker放在路线中点
+      const courierIdx = Math.floor(routePoints.length / 2);
+      const courierPos = routePoints[courierIdx];
+      markers.push({
+        id: 99,
+        longitude: courierPos.longitude,
+        latitude: courierPos.latitude,
+        iconPath: '/images/courier.png',
+        width: 28,
+        height: 28,
+        title: '配送员'
+      });
+    }
+
+    this.setData({ mapMarkers: markers, includePoints, polyline });
+  },
+
+  openPickupLocation() {
+    const loc = this.data.pickupLocationObj;
+    if (loc) {
+      wx.openLocation({
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        name: '取件地点',
+        scale: 16
+      });
+    }
+  },
+
+  openDeliveryLocation() {
+    const loc = this.data.deliveryLocationObj;
+    if (loc) {
+      wx.openLocation({
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        name: '送达地点',
+        scale: 16
+      });
+    }
+  },
 }) 

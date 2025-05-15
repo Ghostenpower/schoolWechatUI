@@ -152,139 +152,6 @@ Page({
     });
   },
 
-  // 选择取件位置
-  choosePickupLocation() {
-    // 增加授权检查
-    wx.getSetting({
-      success: (res) => {
-        if (!res.authSetting['scope.userLocation']) {
-          wx.authorize({
-            scope: 'scope.userLocation',
-            success: () => {
-              this.selectLocation('pickup');
-            },
-            fail: () => {
-              wx.showModal({
-                title: '提示',
-                content: '需要获取您的地理位置，请确认授权',
-                success: (res) => {
-                  if (res.confirm) {
-                    wx.openSetting({
-                      success: (res) => {
-                        if (res.authSetting['scope.userLocation']) {
-                          this.selectLocation('pickup');
-                        }
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        } else {
-          this.selectLocation('pickup');
-        }
-      }
-    });
-  },
-
-  // 选择送达位置
-  chooseDeliveryLocation() {
-    // 增加授权检查
-    wx.getSetting({
-      success: (res) => {
-        if (!res.authSetting['scope.userLocation']) {
-          wx.authorize({
-            scope: 'scope.userLocation',
-            success: () => {
-              this.selectLocation('delivery');
-            },
-            fail: () => {
-              wx.showModal({
-                title: '提示',
-                content: '需要获取您的地理位置，请确认授权',
-                success: (res) => {
-                  if (res.confirm) {
-                    wx.openSetting({
-                      success: (res) => {
-                        if (res.authSetting['scope.userLocation']) {
-                          this.selectLocation('delivery');
-                        }
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        } else {
-          this.selectLocation('delivery');
-        }
-      }
-    });
-  },
-
-  // 提取选择位置的公共方法
-  selectLocation(type) {
-    wx.chooseLocation({
-      success: (res) => {
-        if (type === 'pickup') {
-          this.setData({
-            'formData.pickupLocation': res.name || res.address,
-            'formData.pickupCoordinates': `${res.longitude},${res.latitude}`
-          });
-        } else if (type === 'delivery') {
-          this.setData({
-            'formData.deliveryLocation': res.name || res.address,
-            'formData.deliveryCoordinates': `${res.longitude},${res.latitude}`
-          });
-        }
-      },
-      fail: (err) => {
-        if (err.errMsg !== 'chooseLocation:fail cancel') {
-          wx.showToast({
-            title: '选择位置失败',
-            icon: 'none'
-          });
-        }
-      }
-    });
-  },
-
-  // 截止时间选择变化
-  onDeadlineChange(e) {
-    const [dayIndex, hourIndex, minuteIndex] = e.detail.value;
-    const days = this.data.deadlineArray[0];
-    const hours = this.data.deadlineArray[1][hourIndex];
-    const minutes = this.data.deadlineArray[2][minuteIndex];
-    
-    const deadlineText = `${days[dayIndex]} ${hours}:${minutes.padStart(2, '0').replace('分', '')}`;
-    
-    // 根据选择的日期构建截止时间对象
-    const now = new Date();
-    const deadlineDate = new Date(now);
-    deadlineDate.setDate(now.getDate() + dayIndex);
-    deadlineDate.setHours(hourIndex);
-    deadlineDate.setMinutes(minuteIndex);
-    deadlineDate.setSeconds(0);
-    
-    // 格式化为ISO标准格式（兼容iOS）
-    const year = deadlineDate.getFullYear();
-    const month = (deadlineDate.getMonth() + 1).toString().padStart(2, '0');
-    const day = deadlineDate.getDate().toString().padStart(2, '0');
-    const formattedHours = hourIndex.toString().padStart(2, '0');
-    const formattedMinutes = minuteIndex.toString().padStart(2, '0');
-    
-    // 使用ISO标准格式 (YYYY-MM-DDTHH:MM:SS)
-    const isoDeadline = `${year}-${month}-${day}T${formattedHours}:${formattedMinutes}:00`;
-    
-    this.setData({
-      deadlineIndex: [dayIndex, hourIndex, minuteIndex],
-      'formData.deadline': deadlineText,
-      'formData.deadlineDate': isoDeadline
-    });
-  },
-
   // 选择图片
   chooseImage() {
     wx.chooseImage({
@@ -293,8 +160,6 @@ Page({
       sourceType: ['album', 'camera'],
       success: (res) => {
         const tempFilePaths = res.tempFilePaths;
-        
-        // 上传图片到服务器
         this.uploadImages(tempFilePaths);
       }
     });
@@ -302,34 +167,35 @@ Page({
 
   // 上传图片到服务器
   uploadImages(tempFilePaths) {
-    wx.showLoading({
-      title: '上传中...',
-      mask: true
-    });
-
-    const uploadPromises = tempFilePaths.map(path => {
+    wx.showLoading({ title: '上传中...', mask: true });
+    const app = getApp();
+    const token = wx.getStorageSync('token');
+    const uploadPromises = tempFilePaths.map(tempFilePath => {
       return new Promise((resolve, reject) => {
         wx.uploadFile({
-          url: 'http://localhost:8080/api/api/upload', // 修正后的后端接口
-          filePath: path,
-          name: 'file', // 字段名必须为file
-          success: (res) => {
+          url: `${app.globalData.baseUrl}/api/api/upload`,
+          filePath: tempFilePath,
+          name: 'file',
+          header: {
+            'token': token
+          },
+          success: (uploadRes) => {
             try {
-              const data = JSON.parse(res.data);
-              if (data.code === 1 && data.data) {
-                resolve(data.data); // data.data为图片URL
+              const result = JSON.parse(uploadRes.data);
+              if (result.code === 1) {
+                resolve(result.data); // 返回图片url
               } else {
-                wx.showToast({ title: data.msg || '上传失败', icon: 'none' });
-                reject(new Error(data.msg || '上传失败'));
+                wx.showToast({ title: result.msg || '上传失败', icon: 'none' });
+                reject(result.msg || '上传失败');
               }
             } catch (e) {
               wx.showToast({ title: '响应解析失败', icon: 'none' });
-              reject(new Error('响应解析失败'));
+              reject('响应解析失败');
             }
           },
           fail: () => {
             wx.showToast({ title: '上传请求失败', icon: 'none' });
-            reject(new Error('上传请求失败'));
+            reject('上传请求失败');
           }
         });
       });
@@ -545,5 +411,142 @@ Page({
       icon: 'none',
       duration: 2000
     });
-  }
+  },
+
+  // 选择取件位置
+  choosePickupLocation() {
+    wx.getSetting({
+      success: (res) => {
+        if (!res.authSetting['scope.userLocation']) {
+          wx.authorize({
+            scope: 'scope.userLocation',
+            success: () => {
+              this.selectLocation('pickup');
+            },
+            fail: () => {
+              wx.showModal({
+                title: '提示',
+                content: '需要获取您的地理位置，请确认授权',
+                success: (res) => {
+                  if (res.confirm) {
+                    wx.openSetting({
+                      success: (res) => {
+                        if (res.authSetting['scope.userLocation']) {
+                          this.selectLocation('pickup');
+                        }
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        } else {
+          this.selectLocation('pickup');
+        }
+      }
+    });
+  },
+
+  // 选择送达位置
+  chooseDeliveryLocation() {
+    wx.getSetting({
+      success: (res) => {
+        if (!res.authSetting['scope.userLocation']) {
+          wx.authorize({
+            scope: 'scope.userLocation',
+            success: () => {
+              this.selectLocation('delivery');
+            },
+            fail: () => {
+              wx.showModal({
+                title: '提示',
+                content: '需要获取您的地理位置，请确认授权',
+                success: (res) => {
+                  if (res.confirm) {
+                    wx.openSetting({
+                      success: (res) => {
+                        if (res.authSetting['scope.userLocation']) {
+                          this.selectLocation('delivery');
+                        }
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          });
+        } else {
+          this.selectLocation('delivery');
+        }
+      }
+    });
+  },
+
+  // 提取选择位置的公共方法
+  selectLocation(type) {
+    wx.chooseLocation({
+      success: (res) => {
+        if (type === 'pickup') {
+          this.setData({
+            'formData.pickupLocation': res.name || res.address,
+            'formData.pickupCoordinates': `${res.longitude},${res.latitude}`
+          });
+        } else if (type === 'delivery') {
+          this.setData({
+            'formData.deliveryLocation': res.name || res.address,
+            'formData.deliveryCoordinates': `${res.longitude},${res.latitude}`
+          });
+        }
+      },
+      fail: (err) => {
+        if (err.errMsg.indexOf('auth deny') !== -1 || err.errMsg.indexOf('auth denied') !== -1) {
+          wx.showModal({
+            title: '授权失败',
+            content: '请在小程序设置中打开“地理位置”权限',
+            showCancel: false
+          });
+        } else if (err.errMsg !== 'chooseLocation:fail cancel') {
+          wx.showToast({
+            title: '选择位置失败',
+            icon: 'none'
+          });
+        }
+      }
+    });
+  },
+
+  // 截止时间选择变化
+  onDeadlineChange(e) {
+    const [dayIndex, hourIndex, minuteIndex] = e.detail.value;
+    const days = this.data.deadlineArray[0];
+    const hours = this.data.deadlineArray[1][hourIndex];
+    const minutes = this.data.deadlineArray[2][minuteIndex];
+    
+    const deadlineText = `${days[dayIndex]} ${hours}:${minutes.padStart(2, '0').replace('分', '')}`;
+    
+    // 根据选择的日期构建截止时间对象
+    const now = new Date();
+    const deadlineDate = new Date(now);
+    deadlineDate.setDate(now.getDate() + dayIndex);
+    deadlineDate.setHours(hourIndex);
+    deadlineDate.setMinutes(minuteIndex);
+    deadlineDate.setSeconds(0);
+    
+    // 格式化为ISO标准格式（兼容iOS）
+    const year = deadlineDate.getFullYear();
+    const month = (deadlineDate.getMonth() + 1).toString().padStart(2, '0');
+    const day = deadlineDate.getDate().toString().padStart(2, '0');
+    const formattedHours = hourIndex.toString().padStart(2, '0');
+    const formattedMinutes = minuteIndex.toString().padStart(2, '0');
+    
+    // 使用ISO标准格式 (YYYY-MM-DDTHH:MM:SS)
+    const isoDeadline = `${year}-${month}-${day}T${formattedHours}:${formattedMinutes}:00`;
+    
+    this.setData({
+      deadlineIndex: [dayIndex, hourIndex, minuteIndex],
+      'formData.deadline': deadlineText,
+      'formData.deadlineDate': isoDeadline
+    });
+  },
 }); 
