@@ -263,5 +263,19 @@ Page({
     wx.navigateTo({
       url: '/pages/rider/register/register'
     })
-  }
+  },
+
+  // 跳转：点击订单数
+  onOrderCountTap() {
+    wx.navigateTo({
+      url: '/pages/order/myorder/myorder'
+    })
+  },
+
+  // 跳转：点击余额
+  onBalanceTap() {
+    wx.navigateTo({
+      url: '/pages/wallet/wallet'
+    })
+  },
 })
