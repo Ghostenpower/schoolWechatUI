@@ -115,26 +115,34 @@ Page({
     }
 
     try {
-      const res = await wx.request({
-        url: `http://10.34.80.151:8051/api/wallet/recharge`,
-        method: 'POST',
-        data: {
-          amount: amount
-        },
-        header: {
-          'Authorization': wx.getStorageSync('token')
-        }
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/users/recharge`,
+          method: 'POST',
+          data: {
+            balance: amount
+          },
+          header: {
+            'token': wx.getStorageSync('token'),
+            'content-type': 'application/json'
+          },
+          success: resolve,
+          fail: reject
+        })
       })
 
-      if (res.statusCode === 200) {
+      if (res.data.code === 1) {
         wx.showToast({
           title: '充值成功',
           icon: 'success'
         })
         this.closeRechargeModal()
-        this.loadWalletInfo()
+        this.onLoad()
       } else {
-        throw new Error('充值失败')
+        wx.showToast({
+          title: res.data.msg || '充值失败',
+          icon: 'none'
+        })
       }
     } catch (error) {
       wx.showToast({
@@ -144,10 +152,56 @@ Page({
     }
   },
 
-  // 提现
+  // 提现弹窗
   onWithdraw() {
-    wx.navigateTo({
-      url: '/pages/wallet/withdraw/index'
+    wx.showModal({
+      title: '提现',
+      content: '',
+      editable: true,
+      placeholderText: '请输入提现金额',
+      success: (res) => {
+        if (res.confirm && res.content) {
+          const amount = parseFloat(res.content)
+          if (!amount || amount <= 0) {
+            wx.showToast({
+              title: '请输入有效金额',
+              icon: 'none'
+            })
+            return
+          }
+          wx.request({
+            url: `${app.globalData.baseUrl}/api/users/withdraw`,
+            method: 'POST',
+            data: {
+              balance: amount
+            },
+            header: {
+              'token': wx.getStorageSync('token'),
+              'content-type': 'application/json'
+            },
+            success: (res) => {
+              if (res.data.code === 1) {
+                wx.showToast({
+                  title: '提现成功',
+                  icon: 'success'
+                })
+                this.onLoad()
+              } else {
+                wx.showToast({
+                  title: res.data.msg || '提现失败',
+                  icon: 'none'
+                })
+              }
+            },
+            fail: () => {
+              wx.showToast({
+                title: '提现失败',
+                icon: 'none'
+              })
+            }
+          })
+        }
+      }
     })
   },
 
