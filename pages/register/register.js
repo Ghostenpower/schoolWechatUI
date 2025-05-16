@@ -60,7 +60,7 @@ Page({
   registerUser(data) {
     return new Promise((resolve, reject) => {
       wx.request({
-        url: 'http://10.34.80.151:8051/api/users/register',
+        url: 'http://localhost:8051/api/users/register',
         method: 'POST',
         data,
         header: { 'Content-Type': 'application/json' },

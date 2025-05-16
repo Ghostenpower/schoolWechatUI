@@ -38,7 +38,7 @@ Page({
   async loadWalletInfo() {
     try {
       const res = await wx.request({
-        url: `http://10.34.80.151:8051/api/wallet/info`,
+        url: `http://localhost:8051/api/wallet/info`,
         method: 'GET',
         header: {
           'Authorization': wx.getStorageSync('token')

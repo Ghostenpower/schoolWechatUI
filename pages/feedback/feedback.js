@@ -135,7 +135,7 @@ Page({
       const imageUrls = []
       for (const imagePath of this.data.images) {
         const uploadRes = await wx.uploadFile({
-          url: `http://10.34.80.151:8051/api/upload`,
+          url: `http://localhost:8051/api/upload`,
           filePath: imagePath,
           name: 'file',
           header: {
@@ -148,7 +148,7 @@ Page({
 
       // 提交反馈
       const res = await wx.request({
-        url: `http://10.34.80.151:8051/api/feedback`,
+        url: `http://localhost:8051/api/feedback`,
         method: 'POST',
         data: {
           content: this.data.content,
