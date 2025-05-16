@@ -52,7 +52,7 @@ Page({
 
         try {
             wx.request({
-                url: 'http://localhost:8051/api/users/login',
+                url: 'http://10.34.80.151:8051/api/users/login',
                 method: 'POST',
                 data: { username, password },
                 header: {
@@ -172,7 +172,7 @@ Page({
         const userInfo = wx.getStorageSync('userInfo');
         if (userInfo && userInfo.userId) {
             wx.request({
-                url: `http://localhost:8051/api/users/getOneById?userId=${userInfo.userId}`,
+                url: `http://10.34.80.151:8051/api/users/getOneById?userId=${userInfo.userId}`,
                 method: 'GET',
                 header: {
                     'token': wx.getStorageSync('token')

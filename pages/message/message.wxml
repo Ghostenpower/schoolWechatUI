@@ -6,7 +6,7 @@
       class="message-item" 
       wx:for="{{messages}}" 
       wx:key="id"
-      bindtap="onTapMessage"
+      bindtap="onTapChat"
       data-id="{{item.id}}"
     >
       <image class="avatar" src="{{item.avatar}}" mode="aspectFill" />

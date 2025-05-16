@@ -60,7 +60,7 @@ Page({
     
     // 获取订单信息
     wx.request({
-      url: 'http://localhost:8051/api/orders/getOneById',
+      url: 'http://10.34.80.151:8051/api/orders/getOneById',
       method: 'GET',
       header: {
         'token': wx.getStorageSync('token')
@@ -124,7 +124,7 @@ Page({
   loadTaskInfo: function (taskId) {
     console.log('开始加载任务信息，ID:', taskId);
     wx.request({
-      url: 'http://localhost:8051/api/tasks/getOneById',
+      url: 'http://10.34.80.151:8051/api/tasks/getOneById',
       method: 'GET',
       header: {
         'token': wx.getStorageSync('token')
@@ -145,17 +145,17 @@ Page({
           
           // 处理坐标信息 - 坐标格式为"经度,纬度"
           if (taskData.pickupCoordinates) {
-            const [longitude, latitude] = taskData.pickupCoordinates.split(',').map(coord => parseFloat(coord));
-            taskData.pickupLongitude = longitude;
-            taskData.pickupLatitude = latitude;
-            console.log('取件坐标(经度,纬度):', longitude, latitude);
+            const coords = taskData.pickupCoordinates.split(',');
+            taskData.pickupLongitude = parseFloat(coords[0]);
+            taskData.pickupLatitude = parseFloat(coords[1]);
+            console.log('取件坐标(经度,纬度):', taskData.pickupLongitude, taskData.pickupLatitude);
           }
           
           if (taskData.deliveryCoordinates) {
-            const [longitude, latitude] = taskData.deliveryCoordinates.split(',').map(coord => parseFloat(coord));
-            taskData.deliveryLongitude = longitude;
-            taskData.deliveryLatitude = latitude;
-            console.log('送达坐标(经度,纬度):', longitude, latitude);
+            const coords = taskData.deliveryCoordinates.split(',');
+            taskData.deliveryLongitude = parseFloat(coords[0]);
+            taskData.deliveryLatitude = parseFloat(coords[1]);
+            console.log('送达坐标(经度,纬度):', taskData.deliveryLongitude, taskData.deliveryLatitude);
           }
           
           this.setData({
@@ -188,7 +188,7 @@ Page({
   loadCourierInfo: function (courierId) {
     console.log('开始加载配送员信息，ID:', courierId);
     wx.request({
-      url: 'http://localhost:8051/api/users/getOneById',
+      url: 'http://10.34.80.151:8051/api/users/getOneById',
       method: 'GET',
       header: {
         'token': wx.getStorageSync('token')
@@ -209,8 +209,12 @@ Page({
           });
         }
       },
-      complete: () => {
-        this.setData({ loading: false });
+      fail: (err) => {
+        console.error('配送员信息请求失败:', err);
+        wx.showToast({
+          title: '网络错误，请重试',
+          icon: 'none'
+        });
       }
     });
   },
@@ -221,7 +225,7 @@ Page({
   loadCustomerInfo: function (customerId) {
     console.log('开始加载客户信息，ID:', customerId);
     wx.request({
-      url: 'http://localhost:8051/api/users/getOneById',
+      url: 'http://10.34.80.151:8051/api/users/getOneById',
       method: 'GET',
       header: {
         'token': wx.getStorageSync('token')
@@ -232,18 +236,25 @@ Page({
       success: (res) => {
         console.log('客户信息API响应:', res.data);
         if (res.data.code === 1 && res.data.data) {
-          // 确保用户ID被正确设置
-          const userData = res.data.data;
-          userData.id = userData.id || customerId; // 确保id字段存在
           this.setData({
-            customerInfo: userData
+            customerInfo: res.data.data,
+            loading: false
           });
         } else {
           wx.showToast({
-            title: res.data.msg || '获取用户信息失败',
+            title: res.data.msg || '获取客户信息失败',
             icon: 'none'
           });
+          this.setData({ loading: false });
         }
+      },
+      fail: (err) => {
+        console.error('客户信息请求失败:', err);
+        wx.showToast({
+          title: '网络错误，请重试',
+          icon: 'none'
+        });
+        this.setData({ loading: false });
       }
     });
   },
@@ -272,7 +283,7 @@ Page({
           
           // 按照API文档格式发送请求
           wx.request({
-            url: 'http://localhost:8051/api/orders/complete',
+            url: 'http://10.34.80.151:8051/api/orders/complete',
             method: 'POST',
             header: {
               'Content-Type': 'application/json',
@@ -402,7 +413,7 @@ Page({
                 
                 // 按照API文档格式构建请求参数
                 wx.request({
-                  url: 'http://localhost:8051/api/orders/cancel',
+                  url: 'http://10.34.80.151:8051/api/orders/cancel',
                   method: 'POST',
                   header: {
                     'Content-Type': 'application/json',
@@ -523,62 +534,20 @@ Page({
   /**
    * 格式化时间
    */
-  formatTime: function (dateString) {
-    console.log('调用formatTime，输入:', dateString);
-    if (!dateString) return '暂无';
-    
-    try {
-      // 检查是否是ISO格式的时间字符串 (2025-04-20T00:45:03)
-      if (typeof dateString === 'string' && dateString.includes('T')) {
-        const date = new Date(dateString);
-        console.log('解析ISO日期:', date);
-        
+  formatTime: function (timestamp) {
+    const date = new Date(timestamp);
         const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const hour = date.getHours().toString().padStart(2, '0');
-        const minute = date.getMinutes().toString().padStart(2, '0');
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const hour = date.getHours();
+    const minute = date.getMinutes();
         
-        const formatted = `${year}-${month}-${day} ${hour}:${minute}`;
-        console.log('格式化结果:', formatted);
-        return formatted;
-      } 
-      
-      // 如果是标准日期对象
-      if (dateString instanceof Date) {
-        const year = dateString.getFullYear();
-        const month = (dateString.getMonth() + 1).toString().padStart(2, '0');
-        const day = dateString.getDate().toString().padStart(2, '0');
-        const hour = dateString.getHours().toString().padStart(2, '0');
-        const minute = dateString.getMinutes().toString().padStart(2, '0');
-        
-        const formatted = `${year}-${month}-${day} ${hour}:${minute}`;
-        console.log('格式化结果:', formatted);
-        return formatted;
-      }
-      
-      // 其他格式，尝试直接解析
-      console.log('尝试直接解析日期字符串');
-      const date = new Date(dateString);
-      
-      if (isNaN(date.getTime())) {
-        console.warn('无法解析的日期字符串:', dateString);
-        return dateString;
-      }
-      
-      const year = date.getFullYear();
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      const hour = date.getHours().toString().padStart(2, '0');
-      const minute = date.getMinutes().toString().padStart(2, '0');
-      
-      const formatted = `${year}-${month}-${day} ${hour}:${minute}`;
-      console.log('格式化结果:', formatted);
-      return formatted;
-    } catch (error) {
-      console.error('日期格式化出错:', error);
-      return dateString; // 出错时返回原始字符串
-    }
+    const formatNumber = n => {
+      n = n.toString();
+      return n[1] ? n : '0' + n;
+    };
+    
+    return [year, month, day].map(formatNumber).join('-') + ' ' + [hour, minute].map(formatNumber).join(':');
   },
 
   /**
@@ -731,7 +700,7 @@ Page({
           
           // 按照API文档格式发送请求
           wx.request({
-            url: 'http://localhost:8051/api/orders/start',
+            url: 'http://10.34.80.151:8051/api/orders/start',
             method: 'POST',
             header: {
               'Content-Type': 'application/json',

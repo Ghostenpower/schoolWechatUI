@@ -129,7 +129,7 @@ Component({
 
       return new Promise((resolve, reject) => {
         wx.request({
-          url: 'http://localhost:8051/api/orders/getList',
+          url: 'http://10.34.80.151:8051/api/orders/getList',
           method: 'GET',
           header: {
             'token': wx.getStorageSync('token') || 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjIsImV4cCI6MTc0NTExNzgxNX0.EmNpLFqFYpGlpftfiaeRyDWDmHFVzqhZ5G-sQURohrE'
@@ -205,7 +205,7 @@ Component({
       wx.showLoading({ title: '提交中...', mask: true });
 
       wx.request({
-        url: 'http://localhost:8051/api/orders/complete',
+        url: 'http://10.34.80.151:8051/api/orders/complete',
         method: 'POST',
         header: {
           'Content-Type': 'application/json',
@@ -295,7 +295,7 @@ Component({
       wx.showLoading({ title: '提交中...', mask: true });
 
       wx.request({
-        url: 'http://localhost:8051/api/orders/start',
+        url: 'http://10.34.80.151:8051/api/orders/start',
         method: 'POST',
         header: {
           'Content-Type': 'application/json',

@@ -1,382 +1,296 @@
 /**
- * WebSocket服务管理器
- * 单例模式实现，确保整个应用只有一个WebSocket连接
+ * WebSocket基础连接管理器
  */
 class SocketManager {
   constructor() {
-    if (SocketManager.instance) {
-      return SocketManager.instance;
-    }
-    SocketManager.instance = this;
-    
     this.socket = null;
-    this.heartbeatInterval = null;
-    this.reconnectTimeout = null;
-    this.listeners = new Map();
-    this.messageQueue = [];  // 消息队列，存储断线时的消息
+    this.messageHandlers = new Set();
     this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 10;  // 增加最大重连次数
-    this.reconnectDelay = 1000;  // 初始重连延迟1秒
-    this.isConnecting = false;
+    this.maxReconnectDelay = 30000; // Maximum reconnect delay of 30 seconds
+    this.connected = false;
+    this.connecting = false;
     this.userId = null;
-    this.lastPingTime = 0;
-    this.pingTimeout = null;
+    this.pendingMessages = []; // 存储待发送的消息
     
-    // 监听网络状态变化
-    wx.onNetworkStatusChange((res) => {
-      console.log('网络状态变化:', res.isConnected);
-      if (res.isConnected) {
-        if (!this.isConnected()) {
-          this.reconnect();
-        }
-      } else {
-        this.cleanup();
+    // 监听小程序生命周期事件
+    this.setupAppLifecycleListeners();
+  }
+  
+  /**
+   * 设置应用生命周期监听
+   */
+  setupAppLifecycleListeners() {
+    // 尝试获取全局App实例
+    const globalApp = getApp();
+    if (!globalApp) return;
+    
+    // 存储原始的生命周期函数
+    const originalOnShow = globalApp.onShow || function() {};
+    const originalOnHide = globalApp.onHide || function() {};
+    
+    // 增强onShow函数，当小程序进入前台时重新连接
+    globalApp.onShow = (options) => {
+      // 调用原始的onShow
+      originalOnShow.call(globalApp, options);
+      
+      // 如果有用户ID但未连接，重新连接
+      if (this.userId && (!this.connected || !this.socket)) {
+        console.log('应用进入前台，重新连接WebSocket');
+        this.connect(this.userId);
       }
-    });
+      
+      // 发送所有挂起的消息
+      this.sendPendingMessages();
+    };
     
-    return this;
+    // 增强onHide函数，监控应用进入后台
+    globalApp.onHide = () => {
+      // 调用原始的onHide
+      originalOnHide.call(globalApp);
+      
+      // 记录应用进入后台，但保持连接
+      console.log('应用进入后台，保持WebSocket连接');
+    };
   }
 
   /**
-   * 初始化WebSocket连接
+   * 连接WebSocket服务器
    * @param {string} userId 用户ID
    */
   connect(userId) {
-    if (this.socket && this.isConnected()) {
-      return Promise.resolve();
-    }
-
+    // Store userId for reconnection purposes
     this.userId = userId;
     
-    return new Promise((resolve, reject) => {
-      if (this.isConnecting) {
-        reject(new Error('正在连接中'));
-        return;
+    // Prevent multiple connection attempts
+    if (this.connecting) {
+      console.log('WebSocket连接已在进行中');
+      return;
+    }
+    
+    // Don't reconnect if already connected
+    if (this.connected && this.socket) {
+      console.log('WebSocket已连接');
+      return;
+    }
+    
+    this.connecting = true;
+
+    try {
+      const app = getApp();
+      const wsUrl = app.globalData.wsUrl || 'ws://campu_run_chat.megajam.online';
+
+      // 关闭现有连接
+      if (this.socket) {
+        this.socket.close();
+        this.socket = null;
       }
 
-      this.isConnecting = true;
-
-      // 检查网络状态
-      wx.getNetworkType({
-        success: (res) => {
-          if (res.networkType === 'none') {
-            const error = new Error('无网络连接');
-            this.handleError(error);
-            reject(error);
-            return;
-          }
-          this.initSocket(resolve, reject);
-        },
-        fail: (error) => {
-          this.handleError(error);
-          reject(error);
-        }
-      });
-    });
-  }
-
-  /**
-   * 初始化WebSocket连接
-   */
-  initSocket(resolve, reject) {
-    try {
       this.socket = wx.connectSocket({
-        url: `ws://localhost:3000/socket.io/?EIO=4&transport=websocket`,
+        url: `${wsUrl}?userId=${userId}`,
         success: () => {
-          console.log('WebSocket连接创建成功');
+          console.log('WebSocket连接成功');
         },
         fail: (error) => {
-          console.error('WebSocket连接创建失败:', error);
-          this.handleError(error);
-          reject(error);
+          console.error('WebSocket连接失败:', error);
+          this.connecting = false;
+          this.connected = false;
+          this.handleReconnect();
         }
       });
 
+      // 监听连接打开
       this.socket.onOpen(() => {
         console.log('WebSocket连接已打开');
-        this.isConnecting = false;
-        this.reconnectAttempts = 0;
+        this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+        this.connecting = false;
+        this.connected = true;
         
-        // Socket.IO 引擎握手
-        this.socket.send({
-          data: '40',
-          fail: (error) => this.handleSendError(error)
-        });
-
-        // 加入用户房间
-        if (this.userId) {
-          const joinData = JSON.stringify(['join', this.userId]);
-          this.socket.send({
-            data: `42${joinData}`,
-            fail: (error) => this.handleSendError(error)
-          });
-        }
-
-        // 开始心跳
-        this.startHeartbeat();
-        
-        // 发送队列中的消息
-        this.flushMessageQueue();
-        
-        resolve();
+        // 连接成功后发送所有挂起的消息
+        this.sendPendingMessages();
       });
 
+      // 监听消息
       this.socket.onMessage((res) => {
-        console.log('收到消息:', res.data);
-        
+        console.log(res);
         try {
-          // 处理心跳响应
-          if (res.data === '3') {
-            this.lastPingTime = Date.now();
-            return;
-          }
+          const response = JSON.parse(res.data);
+          console.log('收到消息:', response);
           
-          // 处理 Socket.IO 消息
-          if (res.data.startsWith('42')) {
-            const messageData = JSON.parse(res.data.slice(2));
-            const [event, data] = messageData;
-            
-            // 通知所有监听该事件的处理器
-            const eventListeners = this.listeners.get(event) || [];
-            eventListeners.forEach(callback => {
-              try {
-                callback(data);
-              } catch (error) {
-                console.error(`事件处理器执行错误 [${event}]:`, error);
-              }
+          if (response.type === 'message') {
+            // 通知所有消息处理器
+            this.messageHandlers.forEach(handler => {
+              handler(response.data);
             });
+            
+            // 播放消息提示音 (仅当消息不是自己发送的)
+            if (response.data && response.data.sender_id !== userId) {
+              this.playMessageTone();
+            }
+          } else if (response.type === 'error') {
+            console.error('服务器错误:', response.error);
           }
         } catch (error) {
-          console.error('消息处理错误:', error);
+          console.error('解析消息失败:', error);
         }
       });
 
+      // 监听连接关闭
       this.socket.onClose(() => {
         console.log('WebSocket连接已关闭');
-        this.cleanup();
-        this.reconnect();
+        this.socket = null;
+        this.connected = false;
+        this.connecting = false;
+        this.handleReconnect();
       });
 
+      // 监听连接错误
       this.socket.onError((error) => {
         console.error('WebSocket错误:', error);
-        this.handleError(error);
-        reject(error);
+        this.socket = null;
+        this.connected = false;
+        this.connecting = false;
+        this.handleReconnect();
       });
+
     } catch (error) {
       console.error('初始化WebSocket失败:', error);
-      this.handleError(error);
-      reject(error);
+      this.socket = null;
+      this.connected = false;
+      this.connecting = false;
+      this.handleReconnect();
     }
   }
 
   /**
-   * 重新连接
+   * 播放消息提示音
    */
-  reconnect() {
-    if (this.isConnecting || this.reconnectTimeout) {
-      return;
-    }
-
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      this.handleError(new Error('重连次数超过限制'));
-      return;
-    }
-
-    console.log(`尝试第 ${this.reconnectAttempts + 1} 次重连...`);
+  playMessageTone() {
+    // 振动功能已禁用
+    console.log('收到新消息');
     
-    // 使用指数退避策略
-    const delay = this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts);
-    this.reconnectTimeout = setTimeout(() => {
-      this.reconnectTimeout = null;
-      this.reconnectAttempts++;
-      this.connect(this.userId).catch(() => {
-        // 重连失败，会自动触发下一次重连
+    // 如果需要音频提示，请确保先创建音频文件
+    // const innerAudioContext = wx.createInnerAudioContext();
+    // innerAudioContext.src = '/assets/audio/message.mp3'; 
+    // innerAudioContext.play();
+  }
+
+  /**
+   * 处理重连逻辑
+   */
+  handleReconnect() {
+    if (!this.userId) {
+      console.log('没有用户ID，不进行重连');
+      return;
+    }
+    
+    // Calculate delay with exponential backoff
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), this.maxReconnectDelay);
+    this.reconnectAttempts++;
+
+    console.log(`尝试在 ${delay}ms 后重新连接... (第 ${this.reconnectAttempts} 次尝试)`);
+    
+    setTimeout(() => {
+      // Check if we're still offline before attempting to reconnect
+      wx.getNetworkType({
+        success: (res) => {
+          if (res.networkType !== 'none' && !this.connected && !this.connecting) {
+            this.connect(this.userId);
+          }
+        }
       });
     }, delay);
   }
-
+  
   /**
-   * 处理发送错误
+   * 发送所有挂起的消息
    */
-  handleSendError(error) {
-    console.error('发送消息失败:', error);
-    if (!this.isConnected()) {
-      this.reconnect();
-    }
-  }
-
-  /**
-   * 发送消息队列中的消息
-   */
-  flushMessageQueue() {
-    while (this.messageQueue.length > 0) {
-      const { event, data, resolve, reject } = this.messageQueue.shift();
-      this.send(event, data).then(resolve).catch(reject);
-    }
-  }
-
-  /**
-   * 添加事件监听器
-   * @param {string} event 事件名称
-   * @param {Function} callback 回调函数
-   */
-  on(event, callback) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, []);
-    }
-    this.listeners.get(event).push(callback);
-  }
-
-  /**
-   * 移除事件监听器
-   * @param {string} event 事件名称
-   * @param {Function} callback 回调函数
-   */
-  off(event, callback) {
-    if (!this.listeners.has(event)) {
+  sendPendingMessages() {
+    if (!this.connected || !this.socket || this.pendingMessages.length === 0) {
       return;
     }
-    const callbacks = this.listeners.get(event);
-    const index = callbacks.indexOf(callback);
-    if (index !== -1) {
-      callbacks.splice(index, 1);
+    
+    console.log(`发送${this.pendingMessages.length}条挂起的消息`);
+    
+    while (this.pendingMessages.length > 0) {
+      const message = this.pendingMessages.shift();
+      this.doSendMessage(message);
+    }
+  }
+  
+  /**
+   * 实际发送消息的内部方法
+   */
+  doSendMessage(message) {
+    try {
+      this.socket.send({
+        data: JSON.stringify(message),
+        fail: (error) => {
+          console.error('发送消息失败:', error);
+          // 发送失败时，将消息重新加入队列
+          this.pendingMessages.push(message);
+        }
+      });
+    } catch (error) {
+      console.error('发送消息失败:', error);
+      // 发送失败时，将消息重新加入队列
+      this.pendingMessages.push(message);
     }
   }
 
   /**
    * 发送消息
-   * @param {string} event 事件名称
-   * @param {Object} data 消息数据
-   * @returns {Promise} 发送结果
+   * @param {Object} message 消息对象
    */
-  send(event, data) {
-    return new Promise((resolve, reject) => {
-      // 如果未连接，尝试重新连接并将消息加入队列
-      if (!this.isConnected()) {
-        this.messageQueue.push({ event, data, resolve, reject });
-        this.reconnect();
-        return;
-      }
+  send(message) {
+    if (!this.socket || !this.connected) {
+      console.log('WebSocket未连接，消息加入待发送队列');
+      // 将消息加入待发送队列
+      this.pendingMessages.push(message);
+      return;
+    }
 
-      try {
-        const messageData = JSON.stringify([event, data]);
-        this.socket.send({
-          data: `42${messageData}`,
-          success: () => resolve(),
-          fail: (error) => {
-            this.handleSendError(error);
-            // 如果发送失败，将消息加入队列
-            this.messageQueue.push({ event, data, resolve, reject });
-            reject(error);
-          }
-        });
-      } catch (error) {
-        this.handleSendError(error);
-        // 如果发送失败，将消息加入队列
-        this.messageQueue.push({ event, data, resolve, reject });
-        reject(error);
-      }
-    });
+    this.doSendMessage(message);
   }
 
   /**
-   * 开始心跳检测
+   * 添加消息处理器
+   * @param {Function} handler 消息处理函数
    */
-  startHeartbeat() {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-    }
-    if (this.pingTimeout) {
-      clearTimeout(this.pingTimeout);
-    }
-
-    this.lastPingTime = Date.now();
-    
-    // 发送心跳
-    this.heartbeatInterval = setInterval(() => {
-      if (!this.isConnected()) {
-        return;
-      }
-
-      this.socket.send({
-        data: '2',
-        fail: (error) => {
-          console.error('心跳发送失败:', error);
-          this.handleSendError(error);
-        }
-      });
-
-      // 设置超时检查
-      this.pingTimeout = setTimeout(() => {
-        const now = Date.now();
-        if (now - this.lastPingTime > 45000) { // 45秒没有收到响应
-          console.error('心跳超时');
-          this.cleanup();
-          this.reconnect();
-        }
-      }, 45000);
-    }, 25000);
+  addMessageHandler(handler) {
+    this.messageHandlers.add(handler);
   }
 
   /**
-   * 清理资源
+   * 移除消息处理器
+   * @param {Function} handler 消息处理函数
    */
-  cleanup() {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = null;
-    }
-    if (this.pingTimeout) {
-      clearTimeout(this.pingTimeout);
-      this.pingTimeout = null;
-    }
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
-    }
+  removeMessageHandler(handler) {
+    this.messageHandlers.delete(handler);
+  }
+
+  /**
+   * 关闭连接
+   */
+  close() {
     if (this.socket) {
-      try {
-        this.socket.close();
-      } catch (e) {
-        console.error('关闭socket失败:', e);
-      }
+      this.socket.close();
       this.socket = null;
     }
-    this.isConnecting = false;
+    this.connected = false;
+    this.connecting = false;
+    this.messageHandlers.clear();
   }
 
   /**
-   * 处理错误
-   * @param {Error} error 错误对象
+   * 清理连接和状态
    */
-  handleError(error) {
-    console.error('WebSocket错误:', error);
-    this.isConnecting = false;
-    
-    // 显示错误提示
-    wx.showToast({
-      title: '连接错误，正在重试',
-      icon: 'none'
-    });
-  }
-
-  /**
-   * 获取socket实例
-   * @returns {Object} WebSocket实例
-   */
-  getSocket() {
-    return this.socket;
-  }
-
-  /**
-   * 获取连接状态
-   * @returns {boolean} 是否已连接
-   */
-  isConnected() {
-    return this.socket !== null && !this.isConnecting;
+  cleanup() {
+    this.close();
+    this.reconnectAttempts = 0;
+    this.userId = null;
+    this.pendingMessages = [];
   }
 }
 
-// 导出单例
-const socketManager = new SocketManager();
-module.exports = socketManager; 
+// 导出实例
+module.exports = new SocketManager(); 

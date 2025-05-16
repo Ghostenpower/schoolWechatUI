@@ -3,11 +3,17 @@
   flex-direction: column;
   height: 100vh;
   background: #f7f7f7;
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .chat-list {
   flex: 1;
   padding: 20rpx;
+  padding-bottom: 160rpx;
+  overflow-y: auto;
+  height: calc(100vh - 140rpx);
 }
 
 .chat-item {
@@ -24,6 +30,7 @@
   height: 80rpx;
   border-radius: 50%;
   margin: 0 20rpx;
+  flex-shrink: 0;
 }
 
 .message-content {
@@ -32,6 +39,13 @@
 
 .chat-item.self .message-content {
   align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-item:not(.self) .message-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .nickname {
@@ -47,6 +61,7 @@
   font-size: 28rpx;
   word-break: break-all;
   box-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
+  max-width: 100%;
 }
 
 .chat-item.self .message-bubble {
@@ -66,28 +81,40 @@
   border-top: 1rpx solid #eee;
   display: flex;
   align-items: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx;
+  z-index: 10;
 }
 
 .message-input {
   flex: 1;
-  height: 72rpx;
+  height: 80rpx;
   background: #f7f7f7;
-  border-radius: 36rpx;
+  border-radius: 40rpx;
   padding: 0 30rpx;
   font-size: 28rpx;
   margin-right: 20rpx;
 }
 
 .send-btn {
-  width: 120rpx;
-  height: 72rpx;
+  width: 100rpx;
+  min-height: 80rpx;
+  height: 80rpx;
   background: #07c160;
   color: #fff;
-  border-radius: 36rpx;
-  font-size: 28rpx;
+  border-radius: 40rpx;
+  font-size: 26rpx;
   padding: 0;
-  line-height: 72rpx;
+  line-height: 80rpx;
   transition: all 0.3s;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .send-btn.disabled,

@@ -7,17 +7,17 @@
     bindscrolltoupper="onScrollToUpper"
   >
     <view 
-      class="chat-item {{item.senderId === userId ? 'self' : ''}}"
+      class="chat-item {{item.senderId == userId ? 'self' : ''}}"
       wx:for="{{messages}}"
       wx:key="timestamp"
       id="msg-{{index}}"
     >
       <image 
         class="avatar" 
-        src="{{item.senderId === userId ? userInfo.avatarUrl : targetInfo.avatarUrl || '/static/default-avatar.png'}}"
+        src="{{item.senderId == userId ? userInfo.avatarUrl : targetInfo.avatarUrl || '/static/default-avatar.png'}}"
       />
       <view class="message-content">
-        <view class="nickname">{{item.senderId === userId ? userInfo.username : targetInfo.username || '对方'}}</view>
+        <view class="nickname">{{item.senderId == userId ? userInfo.username : targetInfo.username || '对方'}}</view>
         <view class="message-bubble">{{item.content}}</view>
         <view class="time">{{item.timeStr}}</view>
       </view>
@@ -36,9 +36,9 @@
       confirm-type="send"
     />
     <button 
-      class="send-btn {{inputMessage.trim() ? '' : 'disabled'}}" 
+      class="send-btn {{!inputMessage || inputMessage.trim() === '' ? 'disabled' : ''}}" 
       bindtap="sendMessage"
-      disabled="{{!inputMessage}}"
+      disabled="{{!inputMessage || inputMessage.trim() === ''}}"
     >发送</button>
   </view>
 </view> 
