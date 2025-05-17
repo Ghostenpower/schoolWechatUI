@@ -6,6 +6,8 @@ Page({
    */
   data: {
     searchKeyword: '',
+    searching: false,
+    searchResults: [],
     tasks: [
       {
         id: 1,
@@ -71,6 +73,9 @@ Page({
         isLoading: false
       });
     }, 1500);
+
+    const keyword = (options.keyword || '').trim();
+    console.log('实际请求的keyword:', keyword);
   },
 
   /**
@@ -418,25 +423,20 @@ Page({
    * 搜索输入
    */
   onSearchInput(e) {
+    const value = e.detail.value;
     this.setData({
-      searchKeyword: e.detail.value
+      searchKeyword: value
     });
-    
-    // 如果搜索关键词不为空，跳转到任务列表页面
-    if (e.detail.value.trim()) {
-      this.onSearch();
-    }
   },
 
-  /**
-   * 确认搜索
-   */
-  onSearch() {
-    if (!this.data.searchKeyword.trim()) return;
-    
-    // 跳转到任务列表页面并传递关键词
+  onSearch(e) {
+    const keyword = this.data.searchKeyword.trim();
+    if (!keyword) {
+      wx.showToast({ title: '请输入关键词', icon: 'none' });
+      return;
+    }
     wx.navigateTo({
-      url: `/pages/tasks/list/index?keyword=${this.data.searchKeyword}`
+      url: `/pages/tasks/list/index?keyword=${encodeURIComponent(keyword)}`
     });
   },
 

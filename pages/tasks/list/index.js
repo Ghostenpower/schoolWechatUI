@@ -12,6 +12,7 @@ Page({
     pageSize: 10,
     keyword: '',
     from: '', // 来源：recommend, hot
+    isSearchMode: false,
   },
 
   /**
@@ -23,43 +24,41 @@ Page({
     });
     
     // 处理页面参数
-    if (options.category) {
-      this.setData({
-        currentCategory: options.category
-      });
-    }
-    
-    if (options.type) {
-      this.setData({
-        currentCategory: options.type
-      });
-    }
-    
     if (options.keyword) {
       this.setData({
-        keyword: options.keyword
+        keyword: options.keyword,
+        page: 1,
+        tasks: [],
+        hasMore: false,
+        isSearchMode: true
       });
-    }
-    
-    if (options.from) {
-      this.setData({
-        from: options.from
-      });
-      
-      // 设置页面标题
-      if (options.from === 'recommend') {
-        wx.setNavigationBarTitle({
-          title: '推荐任务'
-        });
-      } else if (options.from === 'hot') {
-        wx.setNavigationBarTitle({
-          title: '热门任务'
-        });
+      this.searchTasks(options.keyword);
+    } else {
+      this.setData({ isSearchMode: false });
+      if (options.category) {
+        this.setData({ currentCategory: options.category });
       }
+      if (options.type) {
+        this.setData({ currentCategory: options.type });
+      }
+      if (options.from) {
+        this.setData({ from: options.from });
+        
+        // 设置页面标题
+        if (options.from === 'recommend') {
+          wx.setNavigationBarTitle({
+            title: '推荐任务'
+          });
+        } else if (options.from === 'hot') {
+          wx.setNavigationBarTitle({
+            title: '热门任务'
+          });
+        }
+      }
+      
+      // 加载任务数据
+      this.loadTasks();
     }
-    
-    // 加载任务数据
-    this.loadTasks();
   },
 
   /**
@@ -333,6 +332,7 @@ Page({
    * 分类选择
    */
   onCategorySelect: function (e) {
+    if (this.data.isSearchMode) return;
     const category = e.currentTarget.dataset.category;
     if (category === this.data.currentCategory) return;
     
@@ -350,6 +350,7 @@ Page({
    * 排序方式切换
    */
   onSortChange: function (e) {
+    if (this.data.isSearchMode) return;
     const sortBy = e.currentTarget.dataset.sort;
     if (sortBy === this.data.sortBy) return;
     
@@ -469,5 +470,66 @@ Page({
    */
   formatAmount(amount) {
     return amount.toFixed(2);
+  },
+
+  searchTasks: function (keyword) {
+    console.log('实际请求的keyword:', keyword);
+    const app = getApp();
+    const token = wx.getStorageSync('token');
+    const baseUrl = app.globalData.baseUrl;
+    this.setData({ loading: true });
+    wx.request({
+      url: `${baseUrl}/api/tasks/search?keyword=${encodeURIComponent(keyword)}`,
+      method: 'GET',
+      header: { 'token': token },
+      success: (res) => {
+        console.log('接口原始返回:', res.data);
+        this.setData({ loading: false });
+        if (res.data.code === 1 && res.data.data && Array.isArray(res.data.data.list)) {
+          // 用 formatApiTasks 格式化
+          const formattedTasks = this.formatApiTasks(res.data.data.list);
+          // 批量补全用户信息
+          Promise.all(formattedTasks.map(task => {
+            return new Promise((resolve) => {
+              if (!task.userId) {
+                resolve(task);
+                return;
+              }
+              wx.request({
+                url: `${baseUrl}/api/users/getOneById?userId=${task.userId}`,
+                method: 'GET',
+                header: { 'token': token },
+                success: (userRes) => {
+                  if (userRes.data && userRes.data.code === 1 && userRes.data.data) {
+                    task.publisher = {
+                      avatar: userRes.data.data.avatarUrl || '/images/default-avatar.png',
+                      nickname: userRes.data.data.username || `用户${task.userId}`
+                    };
+                  }
+                  resolve(task);
+                },
+                fail: () => {
+                  resolve(task);
+                }
+              });
+            });
+          })).then(tasksWithUser => {
+            console.log('搜索结果:', tasksWithUser);
+            this.setData({ tasks: tasksWithUser, hasMore: false });
+          });
+        } else {
+          this.setData({ tasks: [], hasMore: false });
+        }
+      },
+      fail: () => {
+        this.setData({ loading: false, tasks: [], hasMore: false });
+        wx.showToast({ title: '搜索失败', icon: 'none' });
+      }
+    });
+  },
+
+  applyCategoryFilter: function(category) {
+    if (this.data.isSearchMode) return;
+    // ...原有分类过滤逻辑...
   }
 }) 

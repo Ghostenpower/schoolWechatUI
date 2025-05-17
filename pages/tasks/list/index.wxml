@@ -1,7 +1,7 @@
 <!--pages/tasks/list/index.wxml-->
 <view class="container">
   <!-- 顶部筛选栏 -->
-  <view class="filter-bar">
+  <view class="filter-bar" wx:if="{{!isSearchMode}}">
     <!-- 分类选择器 -->
     <view class="category-selector">
       <scroll-view scroll-x class="category-scroll" show-scrollbar="{{false}}" enhanced="{{true}}">

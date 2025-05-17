@@ -116,6 +116,44 @@ Page({
     this.setData({ images })
   },
 
+  // 上传图片到服务器
+  async uploadImages(tempFilePaths) {
+    wx.showLoading({ title: '上传中...', mask: true });
+    const app = getApp();
+    const token = wx.getStorageSync('token');
+    const uploadPromises = tempFilePaths.map(tempFilePath => {
+      return new Promise((resolve, reject) => {
+        wx.uploadFile({
+          url: `${app.globalData.baseUrl}/api/file/upload`,
+          filePath: tempFilePath,
+          name: 'file',
+          header: {
+            'token': token
+          },
+          success: (uploadRes) => {
+            try {
+              const result = JSON.parse(uploadRes.data);
+              if (result.code === 1) {
+                resolve(result.data); // 返回图片url
+              } else {
+                wx.showToast({ title: result.msg || '上传失败', icon: 'none' });
+                reject(result.msg || '上传失败');
+              }
+            } catch (e) {
+              wx.showToast({ title: '响应解析失败', icon: 'none' });
+              reject('响应解析失败');
+            }
+          },
+          fail: () => {
+            wx.showToast({ title: '上传请求失败', icon: 'none' });
+            reject('上传请求失败');
+          }
+        });
+      });
+    });
+    return Promise.all(uploadPromises);
+  },
+
   // 提交反馈
   async submitFeedback() {
     if (!this.data.content.trim()) {
@@ -132,35 +170,33 @@ Page({
 
     try {
       // 上传图片
-      const imageUrls = []
-      for (const imagePath of this.data.images) {
-        const uploadRes = await wx.uploadFile({
-          url: `http://localhost:8051/api/upload`,
-          filePath: imagePath,
-          name: 'file',
-          header: {
-            'Authorization': wx.getStorageSync('token')
-          }
-        })
-        const data = JSON.parse(uploadRes.data)
-        imageUrls.push(data.url)
+      let imageUrls = [];
+      if (this.data.images.length > 0) {
+        imageUrls = await this.uploadImages(this.data.images);
       }
-
+      // 拼接图片url字符串
+      const imagesUrl = imageUrls.join(',');
       // 提交反馈
-      const res = await wx.request({
-        url: `http://localhost:8051/api/feedback`,
-        method: 'POST',
-        data: {
-          content: this.data.content,
-          images: imageUrls,
-          contact: this.data.contact
-        },
-        header: {
-          'Authorization': wx.getStorageSync('token')
-        }
-      })
-
-      if (res.statusCode === 200) {
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.baseUrl}/api/feedback/submit`,
+          method: 'POST',
+          data: {
+            id: 0,
+            suggestion: this.data.content,
+            contact: this.data.contact,
+            imagesUrl: imagesUrl,
+            createTime: ''
+          },
+          header: {
+            'token': wx.getStorageSync('token'),
+            'content-type': 'application/json'
+          },
+          success: resolve,
+          fail: reject
+        })
+      });
+      if (res.data && res.data.code === 1) {
         wx.showToast({
           title: '提交成功',
           icon: 'success'
@@ -169,7 +205,10 @@ Page({
           wx.navigateBack()
         }, 1500)
       } else {
-        throw new Error('提交失败')
+        wx.showToast({
+          title: res.data.msg || '提交失败',
+          icon: 'none'
+        })
       }
     } catch (error) {
       wx.showToast({

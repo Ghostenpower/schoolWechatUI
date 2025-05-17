@@ -17,11 +17,11 @@ Component({
     pageSize: 10,
     hasMore: true,
     loading: false,
-    // 订单状态映射 (0=全部,1=待开始,2=待完成,3=已完成,4=已取消)
+    // 订单状态映射 (0=全部,1=待开始,2=进行中,3=已完成,4=已取消)
     orderStatusMap: {
       0: '全部',
       1: '待开始',
-      2: '待完成',
+      2: '进行中',
       3: '已完成',
       4: '已取消'
     },
@@ -129,7 +129,7 @@ Component({
 
       return new Promise((resolve, reject) => {
         wx.request({
-          url: 'http://10.34.80.151:8051/api/orders/getList',
+          url: `${app.globalData.baseUrl}/api/orders/getList`,
           method: 'GET',
           header: {
             'token': wx.getStorageSync('token') || 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjIsImV4cCI6MTc0NTExNzgxNX0.EmNpLFqFYpGlpftfiaeRyDWDmHFVzqhZ5G-sQURohrE'
@@ -205,7 +205,7 @@ Component({
       wx.showLoading({ title: '提交中...', mask: true });
 
       wx.request({
-        url: 'http://10.34.80.151:8051/api/orders/complete',
+        url: `${app.globalData.baseUrl}/api/orders/complete`,
         method: 'POST',
         header: {
           'Content-Type': 'application/json',
@@ -273,9 +273,10 @@ Component({
     // 获取状态样式类
     _getStatusClass(orderStatus) {
       switch (orderStatus) {
-        case 1: return 'pending';
-        case 2: return 'completed';
-        case 3: return 'cancelled';
+        case 1: return 'pending';      // 待开始
+        case 2: return 'processing';   // 进行中
+        case 3: return 'completed';    // 已完成
+        case 4: return 'cancelled';    // 已取消
         default: return '';
       }
     },
@@ -295,7 +296,7 @@ Component({
       wx.showLoading({ title: '提交中...', mask: true });
 
       wx.request({
-        url: 'http://10.34.80.151:8051/api/orders/start',
+        url: `${app.globalData.baseUrl}/api/orders/start`,
         method: 'POST',
         header: {
           'Content-Type': 'application/json',

@@ -36,7 +36,7 @@
   <view class="section-header">
     <text class="section-title">校园跑腿</text>
   </view>
-  <scroll-view class="services-scroll" scroll-x enable-flex show-scrollbar="{{false}}">
+  <scroll-view class="services-scroll" scroll-x enable-flex show-scrollbar="{{false}}" style="width: 635rpx; display: block; box-sizing: border-box">
     <view class="enhanced-service-item" bindtap="onServiceTap" data-type="express">
       <view class="service-icon-wrapper express">
         <image class="service-icon" src="/images/icons/express.png" mode="aspectFit"/>
