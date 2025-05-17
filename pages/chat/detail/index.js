@@ -72,7 +72,7 @@ Page({
   // 加载目标用户信息
   loadTargetInfo() {
     wx.request({
-      url: `http://10.34.80.151:8051/api/users/getOneById?userId=${this.data.targetId}`,
+      url: `${app.globalData.baseUrl}/api/users/getOneById?userId=${this.data.targetId}`,
       method: 'GET',
       header: {
         'token': wx.getStorageSync('token')

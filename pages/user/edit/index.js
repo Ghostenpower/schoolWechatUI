@@ -15,7 +15,7 @@ Page({
   submitEdit() {
     const { userInfo } = this.data;
     wx.request({
-      url: 'http://localhost:8051/api/users/update',
+      url: `${app.globalData.baseUrl}/api/users/update`,
       method: 'POST',
       data: userInfo,
       header: {
