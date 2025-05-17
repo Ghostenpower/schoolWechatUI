@@ -1,3 +1,5 @@
+const app = getApp()
+
 Page({
   /**
    * 页面的初始数据
@@ -16,7 +18,7 @@ Page({
     // 订单状态映射
     orderStatusMap: {
       1: '待开始',
-      2: '待完成',
+      2: '进行中',
       3: '已完成',
       4: '已取消'
     },
@@ -60,7 +62,7 @@ Page({
     
     // 获取订单信息
     wx.request({
-      url: 'http://10.34.80.151:8051/api/orders/getOneById',
+      url: `${app.globalData.baseUrl}/api/orders/getOneById`,
       method: 'GET',
       header: {
         'token': wx.getStorageSync('token')
@@ -124,7 +126,7 @@ Page({
   loadTaskInfo: function (taskId) {
     console.log('开始加载任务信息，ID:', taskId);
     wx.request({
-      url: 'http://10.34.80.151:8051/api/tasks/getOneById',
+      url: `${app.globalData.baseUrl}/api/tasks/getOneById`,
       method: 'GET',
       header: {
         'token': wx.getStorageSync('token')
@@ -188,7 +190,7 @@ Page({
   loadCourierInfo: function (courierId) {
     console.log('开始加载配送员信息，ID:', courierId);
     wx.request({
-      url: 'http://10.34.80.151:8051/api/users/getOneById',
+      url: `${app.globalData.baseUrl}/api/users/getOneById`,
       method: 'GET',
       header: {
         'token': wx.getStorageSync('token')
@@ -225,7 +227,7 @@ Page({
   loadCustomerInfo: function (customerId) {
     console.log('开始加载客户信息，ID:', customerId);
     wx.request({
-      url: 'http://10.34.80.151:8051/api/users/getOneById',
+      url: `${app.globalData.baseUrl}/api/users/getOneById`,
       method: 'GET',
       header: {
         'token': wx.getStorageSync('token')
@@ -283,7 +285,7 @@ Page({
           
           // 按照API文档格式发送请求
           wx.request({
-            url: 'http://10.34.80.151:8051/api/orders/complete',
+            url: `${app.globalData.baseUrl}/api/orders/complete`,
             method: 'POST',
             header: {
               'Content-Type': 'application/json',
@@ -413,7 +415,7 @@ Page({
                 
                 // 按照API文档格式构建请求参数
                 wx.request({
-                  url: 'http://10.34.80.151:8051/api/orders/cancel',
+                  url: `${app.globalData.baseUrl}/api/orders/cancel`,
                   method: 'POST',
                   header: {
                     'Content-Type': 'application/json',
@@ -700,7 +702,7 @@ Page({
           
           // 按照API文档格式发送请求
           wx.request({
-            url: 'http://10.34.80.151:8051/api/orders/start',
+            url: `${app.globalData.baseUrl}/api/orders/start`,
             method: 'POST',
             header: {
               'Content-Type': 'application/json',

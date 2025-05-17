@@ -9,7 +9,7 @@
       bindtap="onTapChat"
       data-id="{{item.id}}"
     >
-      <image class="avatar" src="{{item.avatar}}" mode="aspectFill" />
+      <image class="avatar" src="{{item.avatar}}" mode="aspectFill" style="border-radius: 50%;" />
       <view class="content">
         <view class="name">{{item.name}}</view>
         <view class="text">{{item.lastMessage}}</view>

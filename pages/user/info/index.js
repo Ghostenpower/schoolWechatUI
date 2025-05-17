@@ -179,7 +179,7 @@ Page({
         
         // 上传图片到服务器
         wx.uploadFile({
-          url: `${app.globalData.baseUrl}/api/api/upload`,
+          url: `${app.globalData.baseUrl}/api/file/upload`,
           filePath: tempFilePath,
           name: 'file',
           header: {

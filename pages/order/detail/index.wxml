@@ -9,7 +9,7 @@
     <view class="order-header">
       <view class="title">{{taskInfo.title || '未命名任务'}}</view>
       <view class="status-group">
-        <view class="status-tag order-status {{orderInfo.orderStatus === 1 ? 'pending' : orderInfo.orderStatus === 2 ? 'completed' : 'cancelled'}}">
+        <view class="status-tag order-status {{orderInfo.orderStatus === 1 ? 'pending' : orderInfo.orderStatus === 2 ? 'processing' : orderInfo.orderStatus === 3 ? 'completed' : orderInfo.orderStatus === 4 ? 'cancelled' : ''}}">
           {{orderStatusMap[orderInfo.orderStatus] || '未知状态'}}
         </view>
       </view>
@@ -110,12 +110,12 @@
       </view>
     </view>
     <!-- 状态标识 -->
-    <view class="status-tips" wx:if="{{orderInfo.orderStatus === 2}}">
+    <view class="status-tips" wx:if="{{orderInfo.orderStatus === 3}}">
       <view class="status-icon completed">✓</view>
       <view class="status-text">订单已完成</view>
       <view class="status-desc">感谢您的使用，期待再次为您服务</view>
     </view>
-    <view class="status-tips" wx:if="{{orderInfo.orderStatus === 3}}">
+    <view class="status-tips" wx:if="{{orderInfo.orderStatus === 4}}">
       <view class="status-icon cancelled">✕</view>
       <view class="status-text">订单已取消</view>
       <view class="status-desc">{{orderInfo.cancelReason || '用户主动取消'}}</view>
@@ -140,7 +140,7 @@
       </view>
     </view>
     <!-- 订单已完成/取消时的底部按钮 -->
-    <view class="bottom-actions" wx:if="{{orderInfo.orderStatus !== 1 && orderInfo.orderStatus !== 2}}">
+    <view class="bottom-actions" wx:if="{{orderInfo.orderStatus === 3 || orderInfo.orderStatus === 4}}">
       <button class="btn back-btn" bindtap="onBackToList" hover-class="btn-hover">返回订单列表</button>
     </view>
   </block>

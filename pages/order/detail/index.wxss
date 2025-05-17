@@ -79,7 +79,7 @@
 
 .order-status.cancelled {
   background-color: #f5f5f5;
-  color: #999;
+  color:#ff4d4f;
 }
 
 /* 内容区域样式 */
