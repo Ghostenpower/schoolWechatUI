@@ -224,8 +224,14 @@ Page({
                   }
                 });
               } else {
+                // 用户不是骑手
                 wx.hideLoading();
-                wx.showToast({ title: courierRes.data.msg || '获取快递员ID失败', icon: 'none' });
+                wx.showToast({ title: '您还不是骑手，请先注册', icon: 'none' });
+                setTimeout(() => {
+                  wx.navigateTo({
+                    url: '/pages/rider/register/register'
+                  });
+                }, 1500);
               }
             },
             fail: () => {

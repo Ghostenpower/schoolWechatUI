@@ -20,7 +20,10 @@
             <text wx:if="{{item.status == 'pending'}}">等待接单</text>
             <text wx:elif="{{item.status == 'accepted'}}">已接单</text>
             <text wx:elif="{{item.status == 'in_progress'}}">进行中</text>
-            <text wx:elif="{{item.status == 'completed'}}">已完成</text>
+            <text wx:elif="{{item.status == 'completed'}}">
+              <text wx:if="{{item.deliveryStatus === 1}}" class="detail-status pending-delivery">待收货</text>
+              <text wx:else>已完成</text>
+            </text>
             <text wx:elif="{{item.status == 'cancelled'}}">已取消</text>
           </view>
         </view>
@@ -41,6 +44,10 @@
                     class="action-btn delete" 
                     catchtap="onDeleteTask" 
                     data-id="{{item.id}}">取消</button>
+            <button wx:if="{{item.status === 'completed' && item.deliveryStatus === 1}}" 
+                    class="action-btn confirm" 
+                    catchtap="onConfirmDelivery" 
+                    data-id="{{item.id}}">确认收货</button>
           </view>
         </view>
       </view>
