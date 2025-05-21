@@ -148,6 +148,7 @@ Page({
             createTime: this.formatTime(task.createdAt),
             remark: task.remark,
             imagesUrl: task.imagesUrl,
+            deliveryStatus: task.deliveryStatus || 0,
             from: from
           }))
 
@@ -414,6 +415,48 @@ Page({
           title: '提交失败',
           icon: 'none'
         })
+      }
+    })
+  },
+
+  // 确认收货
+  onConfirmDelivery(e) {
+    const taskId = e.currentTarget.dataset.id
+    wx.showModal({
+      title: '确认收货',
+      content: '确认已收到货物吗？',
+      success: (modalRes) => {
+        if (modalRes.confirm) {
+          wx.request({
+            url: `${app.globalData.baseUrl}/api/tasks/confirmDelivery`,
+            method: 'POST',
+            data: { taskId },
+            header: {
+              'token': wx.getStorageSync('token'),
+              'content-type': 'application/x-www-form-urlencoded'
+            },
+            success: (res) => {
+              if (res.statusCode === 200 && res.data && res.data.code === 1) {
+                wx.showToast({
+                  title: '确认收货成功',
+                  icon: 'success'
+                })
+                this.refreshTasks()
+              } else {
+                wx.showToast({
+                  title: (res.data && res.data.msg) ? res.data.msg : '确认收货失败',
+                  icon: 'none'
+                })
+              }
+            },
+            fail: () => {
+              wx.showToast({
+                title: '确认收货失败',
+                icon: 'none'
+              })
+            }
+          })
+        }
       }
     })
   },

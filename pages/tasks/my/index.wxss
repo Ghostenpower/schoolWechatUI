@@ -127,37 +127,39 @@
 }
 
 .task-actions {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #eee;
   display: flex;
   justify-content: flex-end;
-  gap: 20rpx;
 }
 
 .action-btn {
-  font-size: 24rpx;
-  padding: 10rpx 20rpx;
-  border-radius: 30rpx;
-  margin: 0;
-  line-height: 1.5;
+  min-width: 160rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: 28rpx;
+  margin-left: 20rpx;
+  padding: 0 32rpx;
+  border-radius: 32rpx;
+  background: #fff;
+  border: none;
 }
 
 .action-btn.edit {
-  background: #e6f7ff;
-  color: #1890ff;
+  color: #07c160;
+  background: none;
 }
 
 .action-btn.delete {
-  background: #fff1f0;
-  color: #f5222d;
+  color: #ff4d4f;
+  background: none;
 }
 
-.action-btn.complete {
-  background: #f6ffed;
-  color: #52c41a;
-}
-
-.action-btn.submit {
-  background: #f6ffed;
-  color: #52c41a;
+.action-btn.confirm {
+  background-color: #07c160;
+  color: #fff;
+  border: none;
 }
 
 .empty-state {
@@ -179,13 +181,37 @@
 }
 
 .detail-status {
-  padding: 6rpx 18rpx;
-  border-radius: 20rpx;
   font-size: 24rpx;
-  font-weight: 500;
+  padding: 4rpx 16rpx;
+  border-radius: 24rpx;
 }
-.detail-status.pending { background-color: rgba(255,175,3,0.1); color: #ffaf03; }
-.detail-status.accepted { background-color: rgba(39,186,155,0.1); color: #27ba9b; }
-.detail-status.completed { background-color: rgba(39,186,155,0.1); color: #27ba9b; }
-.detail-status.in_progress { background-color: rgba(39,186,155,0.1); color: #27ba9b; }
-.detail-status.cancelled { background-color: rgba(255,77,79,0.08); color: #ff4d4f; } 
+
+.detail-status.completed {
+  background-color: #f0f9eb;
+  color: #67c23a;
+}
+
+.detail-status.pending {
+  background-color: #f4f4f5;
+  color: #909399;
+}
+
+.detail-status.accepted {
+  background-color: #ecf5ff;
+  color: #409eff;
+}
+
+.detail-status.in_progress {
+  background-color: #fdf6ec;
+  color: #e6a23c;
+}
+
+.detail-status.cancelled {
+  background-color: #fef0f0;
+  color: #f56c6c;
+}
+
+.detail-status.pending-delivery {
+  background-color: #fdf6ec;
+  color: #e6a23c;
+} 

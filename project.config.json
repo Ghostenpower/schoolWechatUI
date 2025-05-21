@@ -20,7 +20,6 @@
     "newFeature": false,
     "uglifyFileName": false,
     "uploadWithSourceMap": true,
-    "useIsolateContext": true,
     "nodeModules": true,
     "enhance": true,
     "useMultiFrameRuntime": true,
@@ -38,6 +37,7 @@
       "disablePlugins": [],
       "outputPath": ""
     },
+    "useIsolateContext": true,
     "ignoreUploadUnusedFiles": true
   },
   "compileType": "miniprogram",
