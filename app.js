@@ -4,8 +4,8 @@ const socketManager = require('./utils/socketManager');
 App({
   globalData: {
     userInfo: null,
-    baseUrl: 'http://run-backend.megajam.online', // API基础URL http://run-backend.megajam.online
-    wsUrl: 'ws://campu_run_chat.megajam.online', // WebSocket服务器URL
+    baseUrl: 'https://run-backend.megajam.online', // API基础URL http://run-backend.megajam.online
+    wsUrl: 'ws://campu-run-chat.megajam.online', // WebSocket服务器URL
     token: null,
     socketManager: socketManager // 添加socketManager到globalData
   },
