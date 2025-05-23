@@ -60,7 +60,7 @@ Page({
     })
 
     wx.uploadFile({
-      url: `${app.globalData.baseUrl}/api/api/upload`,
+      url: `${app.globalData.baseUrl}/api/file/upload`,
       filePath: tempFilePath,
       name: 'file',
       formData: {},
