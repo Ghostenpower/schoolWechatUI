@@ -74,10 +74,10 @@ class SocketManager {
     }
     
     this.connecting = true;
+    
 
     try {
-      const app = getApp();
-      const wsUrl = app.globalData.wsUrl || 'ws://campu_run_chat.megajam.online';
+      const wsUrl = 'wss://campu-run-chat.megajam.online';
 
       // 关闭现有连接
       if (this.socket) {

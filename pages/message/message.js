@@ -73,7 +73,7 @@ Page({
     try {
       const res = await new Promise((resolve, reject) => {
         wx.request({
-          url: `${app.globalData.wsUrl.replace('ws:', 'http:')}/api/users/${this.data.userId}/chats`,
+          url: `https://campu-run-chat.megajam.online/api/users/${this.data.userId}/chats`,
           method: 'GET',
           success: resolve,
           fail: reject

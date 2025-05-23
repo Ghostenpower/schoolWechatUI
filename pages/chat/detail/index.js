@@ -119,7 +119,7 @@ Page({
 
     return new Promise((resolve, reject) => {
       wx.request({
-        url: `${app.globalData.wsUrl.replace('ws:', 'http:')}/api/messages/${this.data.userId}/${this.data.targetId}`,
+        url: `${app.globalData.wsUrl.replace('wss:', 'https:')}/api/messages/${this.data.userId}/${this.data.targetId}`,
         method: 'GET',
         data: {
           page: page,
