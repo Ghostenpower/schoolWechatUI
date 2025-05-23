@@ -32,10 +32,8 @@ Page({
 
   refreshData() {
     // 刷新用户信息和统计数据
-    console.log('正在刷新数据...')
     this.getUserInfo()
     this.getUserStats()
-    console.log('数据已刷新')
   },
 
   logout() {

@@ -1,3 +1,5 @@
+const app = getApp()
+
 Page({
   data: {
     username: '',
@@ -60,7 +62,7 @@ Page({
   registerUser(data) {
     return new Promise((resolve, reject) => {
       wx.request({
-        url: 'http://localhost:8051/api/users/register',
+        url: `${app.globalData.baseUrl}/api/users/register`,
         method: 'POST',
         data,
         header: { 'Content-Type': 'application/json' },

@@ -5,7 +5,8 @@ App({
   globalData: {
     userInfo: null,
     baseUrl: 'https://run-backend.megajam.online', // API基础URL http://run-backend.megajam.online
-    wsUrl: 'ws://campu-run-chat.megajam.online', // WebSocket服务器URL
+    wsUrl: 'wss://campu-run-chat.megajam.online', // WebSocket服务器URL
+    chatUrl: 'https://campu-run-chat.megajam.online', // 聊天服务器URL
     token: null,
     socketManager: socketManager // 添加socketManager到globalData
   },
