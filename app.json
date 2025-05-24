@@ -53,7 +53,7 @@
       },
       {
         "pagePath": "pages/profile/profile",
-        "text": "个人信息",
+        "text": "我的",
         "iconPath": "images/tabs/my.png",
         "selectedIconPath": "images/tabs/my_active.png"
       }

@@ -4,7 +4,7 @@
   <view class="filter-bar" wx:if="{{!isSearchMode}}">
     <!-- 分类选择器 -->
     <view class="category-selector">
-      <scroll-view scroll-x class="category-scroll" show-scrollbar="{{false}}" enhanced="{{true}}">
+      <scroll-view scroll-x class="category-scroll" show-scrollbar="{{false}}" enhanced="{{true}}" style="width: 675rpx; display: block; box-sizing: border-box">
         <view 
           class="category-item {{currentCategory === 'all' ? 'active' : ''}}" 
           bindtap="onCategorySelect" 

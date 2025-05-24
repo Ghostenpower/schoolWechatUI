@@ -356,12 +356,75 @@ Page({
     const baseUrl = app.globalData.baseUrl;
     const token = wx.getStorageSync('token');
     
+    // 显示加载提示
     wx.showLoading({
-      title: '提交中...',
+      title: '检查余额...',
+      mask: true
+    });
+
+    // 获取最新余额
+    wx.request({
+      url: `${app.globalData.baseUrl}/api/users/getOneById`,
+      method: 'GET',
+      header: {
+        'token': token
+      },
+      data: {
+        userId: wx.getStorageSync('userInfo').userId
+      },
+      success: (res) => {
+        wx.hideLoading();
+        if (res.data.code === 1 && res.data.data) {
+          const currentBalance = parseFloat(res.data.data.balance || 0);
+          const taskReward = parseFloat(data.reward);
+
+          // 检查余额是否足够
+          if (currentBalance < taskReward) {
+            wx.showModal({
+              title: '余额不足',
+              content: `当前余额${currentBalance.toFixed(2)}元，发布任务需要${taskReward.toFixed(2)}元，是否前往充值？`,
+              confirmText: '去充值',
+              success: (res) => {
+                if (res.confirm) {
+                  wx.navigateTo({
+                    url: '/pages/wallet/wallet'
+                  });
+                }
+              }
+            });
+            return;
+          }
+
+          // 余额充足，继续发布任务
+          this.publishTask(data);
+        } else {
+          wx.showToast({
+            title: res.data.msg || '获取余额失败',
+            icon: 'none'
+          });
+        }
+      },
+      fail: () => {
+        wx.hideLoading();
+        wx.showToast({
+          title: '网络错误',
+          icon: 'none'
+        });
+      }
+    });
+  },
+
+  // 发布任务
+  publishTask(data) {
+    const app = getApp();
+    const baseUrl = app.globalData.baseUrl;
+    const token = wx.getStorageSync('token');
+
+    wx.showLoading({
+      title: '发布中...',
       mask: true
     });
     
-    // 使用wx.request直接调用API
     wx.request({
       url: baseUrl + '/api/tasks/add',
       method: 'POST',
@@ -378,7 +441,6 @@ Page({
             icon: 'success',
             duration: 2000,
             success: () => {
-              // 延迟返回，让用户看到成功提示
               setTimeout(() => {
                 wx.navigateBack({
                   delta: 1
@@ -503,7 +565,7 @@ Page({
         if (err.errMsg.indexOf('auth deny') !== -1 || err.errMsg.indexOf('auth denied') !== -1) {
           wx.showModal({
             title: '授权失败',
-            content: '请在小程序设置中打开“地理位置”权限',
+            content: '请在小程序设置中打开"地理位置"权限',
             showCancel: false
           });
         } else if (err.errMsg !== 'chooseLocation:fail cancel') {
