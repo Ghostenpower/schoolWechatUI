@@ -159,9 +159,18 @@ Page({
     const baseUrl = app.globalData.baseUrl;
 
     wx.request({
-      url: baseUrl + '/api/tasks/all',
-      method: 'GET',
-      header: { 'token': token },
+      url: baseUrl + '/api/tasks/getListByStatus',
+      method: 'POST',
+      data: {
+        pageNum: 1,
+        pageSize: 3, // 只显示3条
+        taskStatus: 0, // 待接单状态
+        tasksType: -1 // 全部类型
+      },
+      header: { 
+        'token': token,
+        'content-type': 'application/x-www-form-urlencoded'
+      },
       success: (res) => {
         if (res.data.code === 1 && res.data.data) {
           const { list } = res.data.data;
@@ -233,10 +242,17 @@ Page({
     const baseUrl = app.globalData.baseUrl;
     
     wx.request({
-      url: baseUrl + '/api/tasks/all',
-      method: 'GET',
+      url: baseUrl + '/api/tasks/getListByStatus',
+      method: 'POST',
+      data: {
+        pageNum: 1,
+        pageSize: 2, // 只显示2条热门任务
+        taskStatus: 0, // 待接单状态
+        tasksType: -1 // 全部类型
+      },
       header: {
-        'token': token
+        'token': token,
+        'content-type': 'application/x-www-form-urlencoded'
       },
       success: (res) => {
         if (res.data.code === 1 && res.data.data) {
@@ -257,7 +273,7 @@ Page({
               avatar: '/images/default-avatar.png',
               nickname: `用户${task.userId}`
             }
-          })).filter(task => task.status === 'pending').slice(0, 2);
+          }));
 
           // 批量获取用户信息
           Promise.all(formattedTasks.map(task => {
