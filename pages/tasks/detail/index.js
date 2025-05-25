@@ -26,7 +26,6 @@ Page({
     if (options.id) {
       this.fetchTaskDetail(options.id)
     }
-    this.parseTaskCoordinates(this.data.task);
   },
 
   // 获取任务详情
@@ -34,133 +33,125 @@ Page({
     const app = getApp();
     const token = wx.getStorageSync('token');
     const baseUrl = app.globalData.baseUrl;
-    const from = this.options?.from || '';
-
-    let url = '';
-    if (from === 'published') {
-      url = baseUrl + '/api/tasks/myPublic';
-    } else {
-      url = baseUrl + '/api/tasks/all';
-    }
 
     this.setData({ loading: true });
     wx.showLoading({ title: '加载中...' });
 
     wx.request({
-      url: url,
+      url: `${baseUrl}/api/tasks/getOneById`,
       method: 'GET',
-      header: { token },
+      data: { taskId },
+      header: { 
+        'token': token,
+        'content-type': 'application/x-www-form-urlencoded'
+      },
       success: (res) => {
         wx.hideLoading();
-        if (res.data.code === 1 && res.data.data && (Array.isArray(res.data.data.list) || Array.isArray(res.data.data))) {
-          // 兼容myPublic和all接口
-          const apiList = Array.isArray(res.data.data.list) ? res.data.data.list : res.data.data;
-          const found = apiList.find(item => String(item.taskId) === String(taskId));
-          if (found) {
-            // 映射字段到页面所需格式
-            const t = {};
-            // 类型映射
-            switch (found.taskType) {
-              case 0: t.type = 'express'; break;
-              case 1: t.type = 'errand'; break;
-              case 2: t.type = 'shopping'; break;
-              case 3: t.type = 'print'; break;
-              default: t.type = 'other';
-            }
-            t.id = found.taskId;
-            t.userId = found.userId;
-            t.title = found.title;
-            t.description = found.description || '暂无描述';
-            t.reward = found.price != null ? parseFloat(found.price) : 0;
-            // 直接生成带符号的价格文本
-            t.rewardText = '¥ ' + t.reward.toFixed(2);
-            // 状态映射
-            switch (found.status) {
-              case 0: t.status = 'pending'; break;      // 待接单
-              case 1: t.status = 'accepted'; break;     // 已接单
-              case 2: t.status = 'in_progress'; break;  // 进行中
-              case 3: t.status = 'completed'; break;    // 已完成
-              case 4: t.status = 'cancelled'; break;    // 已取消
-              default: t.status = 'pending';
-            }
-            
-            t.location = found.pickupLocation || '未指定位置';
-            t.destination = found.deliveryLocation || '';
-            // 新增：补充坐标字段
-            t.pickupCoordinates = found.pickupCoordinates || '';
-            t.deliveryCoordinates = found.deliveryCoordinates || '';
-            // 格式化时间
-            try {
-              const d = new Date(found.deadline);
-              const m = d.getMonth()+1;
+        if (res.data.code === 1 && res.data.data) {
+          const found = res.data.data;
+          // 映射字段到页面所需格式
+          const t = {};
+          // 类型映射
+          switch (found.taskType) {
+            case 0: t.type = 'express'; break;
+            case 1: t.type = 'errand'; break;
+            case 2: t.type = 'shopping'; break;
+            case 3: t.type = 'print'; break;
+            default: t.type = 'other';
+          }
+          t.id = found.taskId;
+          t.userId = found.userId;
+          t.title = found.title || '未命名任务';
+          t.description = found.description || '暂无描述';
+          t.reward = found.price != null ? parseFloat(found.price) : 0;
+          // 直接生成带符号的价格文本
+          t.rewardText = '¥ ' + t.reward.toFixed(2);
+          // 状态映射
+          switch (found.status) {
+            case 0: t.status = 'pending'; break;      // 待接单
+            case 1: t.status = 'accepted'; break;     // 已接单
+            case 2: t.status = 'in_progress'; break;  // 进行中
+            case 3: t.status = 'completed'; break;    // 已完成
+            case 4: t.status = 'cancelled'; break;    // 已取消
+            default: t.status = 'pending';
+          }
+          
+          t.location = found.pickupLocation || '未指定位置';
+          t.destination = found.deliveryLocation || '';
+          // 坐标字段
+          t.pickupCoordinates = found.pickupCoordinates || '';
+          t.deliveryCoordinates = found.deliveryCoordinates || '';
+          // 格式化时间
+          try {
+            if (found.deadline) {
+              const d = new Date(found.deadline.replace('T', ' '));
+              const m = d.getMonth() + 1;
               const day = d.getDate();
               const hh = d.getHours();
               const mm = d.getMinutes();
-              t.deadline = `${m}月${day}日 ${hh}:${mm <10?'0'+mm:mm}`;
-            } catch (err) {
-              t.deadline = found.deadline;
+              t.deadline = `${m}月${day}日 ${hh}:${mm < 10 ? '0' + mm : mm}`;
+            } else {
+              t.deadline = '未设置截止时间';
             }
-            t.createTime = (found.createdAt || '').replace('T',' ');
-            // 解析任务图片列表
-            t.images = found.imagesUrl ? found.imagesUrl
-              .split(',')
-              .filter(url => url)
-              .map(url => url.startsWith('http') || url.startsWith('https') ? url : baseUrl + url) : [];
-            // 发布者信息（当前用户）
-            t.publisher = { avatar: '/images/default-avatar.png', nickname: `用户${found.userId}` };
-            // 接单者信息
-            t.acceptor = null;
-            t.packageInfo = {
-              code: found.remark || '',
-              size: '',
-              weight: ''
-            };
-            // 备注信息
-            t.remark = found.remark || '';
-            // 新增：请求发布者真实信息
-            wx.request({
-              url: `${baseUrl}/api/users/getOneById?userId=${found.userId}`,
-              method: 'GET',
-              header: { 'token': wx.getStorageSync('token') },
-              success: (userRes) => {
-                if (userRes.data && userRes.data.code === 1 && userRes.data.data) {
-                  t.publisher = {
-                    avatar: userRes.data.data.avatarUrl || '/images/default-avatar.png',
-                    nickname: userRes.data.data.username || `用户${found.userId}`
-                  };
-                } else {
-                  t.publisher = {
-                    avatar: '/images/default-avatar.png',
-                    nickname: `用户${found.userId}`
-                  };
-                }
-                this.setData({ task: t, loading: false }, () => {
-                  this.parseTaskCoordinates(t);
-                });
-              },
-              fail: () => {
-                t.publisher = {
-                  avatar: '/images/default-avatar.png',
-                  nickname: `用户${found.userId}`
-                };
-                this.setData({ task: t, loading: false }, () => {
-                  this.parseTaskCoordinates(t);
-                });
-              }
-            });
-            console.log('当前用户ID:', wx.getStorageSync('userInfo')?.userId, '任务发布者ID:', found.userId);
-          } else {
-            wx.showToast({ title: '任务不存在', icon:'none' });
-            this.setData({ loading: false });
+          } catch (err) {
+            console.error('日期解析错误:', err);
+            t.deadline = found.deadline || '未设置截止时间';
           }
+          t.createTime = (found.createdAt || '').replace('T', ' ');
+          // 解析任务图片列表
+          t.images = found.imagesUrl ? found.imagesUrl
+            .split(',')
+            .filter(url => url)
+            .map(url => url.startsWith('http') || url.startsWith('https') ? url : baseUrl + url) : [];
+          // 发布者信息（当前用户）
+          t.publisher = { avatar: '/images/default-avatar.png', nickname: `用户${found.userId}` };
+          // 接单者信息
+          t.acceptor = null;
+          t.packageInfo = {
+            code: found.remark || '',
+            size: '',
+            weight: ''
+          };
+          // 备注信息
+          t.remark = found.remark || '';
+          
+          // 获取发布者信息
+          wx.request({
+            url: `${baseUrl}/api/users/getOneById?userId=${found.userId}`,
+            method: 'GET',
+            header: { 'token': token },
+            success: (userRes) => {
+              if (userRes.data && userRes.data.code === 1 && userRes.data.data) {
+                t.publisher = {
+                  avatar: userRes.data.data.avatarUrl || '/images/default-avatar.png',
+                  nickname: userRes.data.data.username || `用户${found.userId}`
+                };
+              }
+              this.setData({ task: t, loading: false }, () => {
+                this.parseTaskCoordinates(t);
+              });
+            },
+            fail: () => {
+              this.setData({ task: t, loading: false }, () => {
+                this.parseTaskCoordinates(t);
+              });
+            }
+          });
         } else {
-          wx.showToast({ title: res.data.msg || '加载失败', icon:'none' });
+          wx.showToast({ 
+            title: res.data.msg || '任务不存在', 
+            icon: 'none' 
+          });
           this.setData({ loading: false });
         }
       },
       fail: (err) => {
+        console.error('请求失败:', err);
         wx.hideLoading();
-        wx.showToast({ title: '网络错误', icon:'none' });
+        wx.showToast({ 
+          title: '网络错误', 
+          icon: 'none' 
+        });
         this.setData({ loading: false });
       }
     });

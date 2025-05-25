@@ -18,10 +18,10 @@
   <!-- 广告横幅 -->
   <swiper class="ad-banner" indicator-dots circular autoplay interval="3000">
     <swiper-item>
-      <image class="ad-image" src="https://megajam-1301211650.cos.ap-guangzhou.myqcloud.com/uploads/banner3.PNG?q-sign-algorithm=sha1&q-ak=AKIDZ02YtRfcKVW-7hxPeYF_dtmI9n6pRZY9WEvj_wGmcCr1-GBTUXfdrejcNbv_oi3B&q-sign-time=1747995400;1747999000&q-key-time=1747995400;1747999000&q-header-list=host&q-url-param-list=ci-process&q-signature=87bdfa30587aa8d83b1f87bfbbd2e5ec4af17851&x-cos-security-token=rdRkr7xHBxUixWM2E0TMmMGxHzTI782a9ee52adaf590e790facd42ef99216abcqhS_rZIBV5QtxWiyPPqYlywa4xCSQBxKq_22Jm9--coyWaDGWvigqA4v2lv8lKTNWmzsgNwnoOroHP5U2fR9Kst6CCgFTq3nuRcSWYgia5R17MEHdJrqsIQpEabWZbbw6e-AZXVsm_gL79gyI9ybfagILzFWD2-ry41Kap96KkWTvRWkxzFkhipntZgu-xOLMPvSFCHBhvdf3WXmfESasUUWWdyB4DT3kMWNZwg1GwZHm4aNkU5sQWFgfnmE3Rj7fEGBDwjCPkWfJi6WiWFQow&ci-process=originImage" mode="aspectFill"/>
+      <image class="ad-image" src="https://megajam-1301211650.cos.ap-guangzhou.myqcloud.com/uploads/banner3.PNG" mode="aspectFill"/>
     </swiper-item>
     <swiper-item>
-      <image class="ad-image" src="https://megajam-1301211650.cos.ap-guangzhou.myqcloud.com/uploads/banner3.PNG?q-sign-algorithm=sha1&q-ak=AKIDZ02YtRfcKVW-7hxPeYF_dtmI9n6pRZY9WEvj_wGmcCr1-GBTUXfdrejcNbv_oi3B&q-sign-time=1747995400;1747999000&q-key-time=1747995400;1747999000&q-header-list=host&q-url-param-list=ci-process&q-signature=87bdfa30587aa8d83b1f87bfbbd2e5ec4af17851&x-cos-security-token=rdRkr7xHBxUixWM2E0TMmMGxHzTI782a9ee52adaf590e790facd42ef99216abcqhS_rZIBV5QtxWiyPPqYlywa4xCSQBxKq_22Jm9--coyWaDGWvigqA4v2lv8lKTNWmzsgNwnoOroHP5U2fR9Kst6CCgFTq3nuRcSWYgia5R17MEHdJrqsIQpEabWZbbw6e-AZXVsm_gL79gyI9ybfagILzFWD2-ry41Kap96KkWTvRWkxzFkhipntZgu-xOLMPvSFCHBhvdf3WXmfESasUUWWdyB4DT3kMWNZwg1GwZHm4aNkU5sQWFgfnmE3Rj7fEGBDwjCPkWfJi6WiWFQow&ci-process=originImage" mode="aspectFill"/>
+      <image class="ad-image" src="https://megajam-1301211650.cos.ap-guangzhou.myqcloud.com/uploads/banner3.PNG" mode="aspectFill"/>
     </swiper-item>
   </swiper>
 

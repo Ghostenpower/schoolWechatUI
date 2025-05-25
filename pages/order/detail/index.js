@@ -612,7 +612,6 @@ Page({
       // 确保经纬度是数字类型
       const latitude = Number(taskInfo.pickupLatitude);
       const longitude = Number(taskInfo.pickupLongitude);
-      
       if (isNaN(latitude) || isNaN(longitude)) {
         wx.showToast({
           title: '坐标格式错误',

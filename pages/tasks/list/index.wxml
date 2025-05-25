@@ -33,81 +33,106 @@
     </view>
   </view>
 
+  <!-- 状态切换栏 -->
+  <view class="status-bar">
+    <view 
+      class="status-item {{currentStatus === item.id ? 'active' : ''}}" 
+      wx:for="{{statusList}}" 
+      wx:key="id"
+      bindtap="onStatusChange"
+      data-status="{{item.id}}">
+      {{item.name}}
+    </view>
+  </view>
+
   <!-- 任务列表 -->
-  <view class="task-list" wx:if="{{!loading && tasks.length > 0}}">
-    <view class="task-item" wx:for="{{tasks}}" wx:key="id" bindtap="onViewTask" data-id="{{item.id}}">
-      <!-- 任务卡片内容 -->
-      <view class="task-card">
-        <!-- 任务头部区域：用户信息和任务标签 -->
-        <view class="task-card-header">
-          <view class="user-info">
-            <image class="avatar" src="{{item.publisher.avatar}}" mode="aspectFill"/>
-            <text class="username">{{item.publisher.nickname}}</text>
+  <scroll-view 
+    class="task-list-scroll"
+    scroll-y
+    enable-back-to-top
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{loading && page === 1}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    bindscrolltolower="onReachBottom"
+    lower-threshold="50"
+    style="height: calc(100vh - {{!isSearchMode ? 150 : 0}}rpx);"
+  >
+    <view class="task-list" wx:if="{{!loading || page > 1}}">
+      <view class="task-item" wx:for="{{tasks}}" wx:key="id" bindtap="onViewTask" data-id="{{item.id}}">
+        <!-- 任务卡片内容 -->
+        <view class="task-card">
+          <!-- 任务头部区域：用户信息和任务标签 -->
+          <view class="task-card-header">
+            <view class="user-info">
+              <image class="avatar" src="{{item.publisher.avatar}}" mode="aspectFill"/>
+              <text class="username">{{item.publisher.nickname}}</text>
+            </view>
+            <view class="task-tag {{item.type}}">
+              {{item.type === 'express' ? '快递' : 
+                item.type === 'errand' ? '跑腿' : 
+                item.type === 'shopping' ? '代购' : 
+                item.type === 'print' ? '打印' : '其他'}}
+            </view>
           </view>
-          <view class="task-tag {{item.type}}">
-            {{item.type === 'express' ? '快递' : 
-              item.type === 'errand' ? '跑腿' : 
-              item.type === 'shopping' ? '代购' : 
-              item.type === 'print' ? '打印' : '其他'}}
+          
+          <!-- 任务标题 -->
+          <view class="task-card-title">
+            <text>{{item.title}}</text>
           </view>
-        </view>
-        
-        <!-- 任务标题 -->
-        <view class="task-card-title">
-          <text>{{item.title}}</text>
-        </view>
-        
-        <!-- 任务详情区域 -->
-        <view class="task-card-details">
-          <view class="detail-item location">
-            <image class="detail-icon" src="/images/icons/location.png" mode="aspectFit"/>
-            <text>{{item.location || '未指定位置'}}</text>
+          
+          <!-- 任务详情区域 -->
+          <view class="task-card-details">
+            <view class="detail-item location">
+              <image class="detail-icon" src="/images/icons/location.png" mode="aspectFit"/>
+              <text>{{item.location || '未指定位置'}}</text>
+            </view>
+            <view class="detail-item time">
+              <image class="detail-icon" src="/images/icons/time.png" mode="aspectFit"/>
+              <text>{{item.deadline || '未设置时间'}}</text>
+            </view>
           </view>
-          <view class="detail-item time">
-            <image class="detail-icon" src="/images/icons/time.png" mode="aspectFit"/>
-            <text>{{item.deadline || '未设置时间'}}</text>
-          </view>
-        </view>
-        
-        <!-- 任务底部：价格和操作按钮 -->
-        <view class="task-card-footer">
-          <view class="price">
-            <text class="price-symbol">¥</text>
-            <text class="price-value">{{item.reward || '---'}}</text>
-          </view>
-          <view class="action-area">
-            <button 
-              class="action-btn {{item.status === 'pending' ? 'accept-btn' : ''}}" 
-              catchtap="onAcceptTask" 
-              data-id="{{item.id}}" 
-              wx:if="{{item.status === 'pending'}}">接单</button>
-            <view class="status-badge accepted" wx:if="{{item.status === 'accepted'}}">已接单</view>
-            <view class="status-badge completed" wx:if="{{item.status === 'completed'}}">已完成</view>
-            <view class="status-badge cancelled" wx:if="{{item.status === 'cancelled'}}">已取消</view>
+          
+          <!-- 任务底部：价格和操作按钮 -->
+          <view class="task-card-footer">
+            <view class="price">
+              <text class="price-symbol">¥</text>
+              <text class="price-value">{{item.reward || '---'}}</text>
+            </view>
+            <view class="action-area">
+              <button 
+                class="action-btn {{item.status === 'pending' ? 'accept-btn' : ''}}" 
+                catchtap="onAcceptTask" 
+                data-id="{{item.id}}" 
+                wx:if="{{item.status === 'pending'}}">接单</button>
+              <view class="status-badge accepted" wx:if="{{item.status === 'accepted'}}">已接单</view>
+              <view class="status-badge completed" wx:if="{{item.status === 'completed'}}">已完成</view>
+              <view class="status-badge cancelled" wx:if="{{item.status === 'cancelled'}}">已取消</view>
+            </view>
           </view>
         </view>
       </view>
     </view>
-  </view>
 
-  <!-- 空状态 -->
-  <view class="empty-state" wx:if="{{!loading && tasks.length === 0}}">
-    <image class="empty-image" src="/images/icons/empty.png" mode="aspectFit"/>
-    <text class="empty-text">暂无相关任务</text>
-    <view class="empty-tip">试试调整筛选条件~</view>
-  </view>
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && tasks.length === 0}}">
+      <image class="empty-image" src="/images/icons/empty.png" mode="aspectFit"/>
+      <text class="empty-text">暂无相关任务</text>
+      <view class="empty-tip">试试调整筛选条件~</view>
+    </view>
 
-  <!-- 加载状态 -->
-  <view class="loading-container" wx:if="{{loading}}">
-    <view class="loading"></view>
-    <text class="loading-text">加载中...</text>
-  </view>
+    <!-- 加载状态 -->
+    <view class="loading-container" wx:if="{{loading && page === 1}}">
+      <view class="loading"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
 
-  <!-- 加载更多 -->
-  <view class="load-more" wx:if="{{!loading && hasMore}}">
-    <text>上拉加载更多</text>
-  </view>
-  <view class="load-more" wx:if="{{!loading && !hasMore && tasks.length > 0}}">
-    <text>已经到底啦</text>
-  </view>
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{loading && page > 1}}">
+      <view class="loading"></view>
+      <text>加载中...</text>
+    </view>
+    <view class="load-more" wx:if="{{!loading && !hasMore && tasks.length > 0}}">
+      <text>已经到底啦</text>
+    </view>
+  </scroll-view>
 </view> 

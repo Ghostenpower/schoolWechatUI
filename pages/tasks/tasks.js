@@ -75,7 +75,6 @@ Page({
     }, 1500);
 
     const keyword = (options.keyword || '').trim();
-    console.log('实际请求的keyword:', keyword);
   },
 
   /**
@@ -354,69 +353,43 @@ Page({
    * 格式化API返回的任务列表数据
    */
   formatListTasks(apiTasks) {
+    if (!Array.isArray(apiTasks)) {
+      console.warn('formatListTasks received non-array input:', apiTasks);
+      return [];
+    }
+
     return apiTasks.map(task => {
-      // 将API返回的任务类型转换为前端使用的类型
-      let taskType = 'other';
-      switch (task.taskType) {
-        case 0:
-          taskType = 'express';
-          break;
-        case 1:
-          taskType = 'errand';
-          break;
-        case 2:
-          taskType = 'shopping';
-          break;
-        case 3:
-          taskType = 'print';
-          break;
-        case 4:
-          taskType = 'other';
-          break;
+      if (!task) {
+        console.warn('Null task object encountered');
+        return null;
       }
-      
-      // 格式化截止时间
-      let deadlineText = task.deadline || '未设置时间';
+
+      let deadline;
       try {
-        if (task.deadline) {
-          const deadline = new Date(task.deadline.replace(' ', 'T'));
-          const month = deadline.getMonth() + 1;
-          const day = deadline.getDate();
-          const hours = deadline.getHours();
-          const minutes = deadline.getMinutes();
-          deadlineText = `${month}月${day}日 ${hours}:${minutes < 10 ? '0' + minutes : minutes}`;
+        // 使用formatDateString确保日期格式兼容iOS
+        deadline = new Date(this.formatDateString(task.deadline));
+        if (isNaN(deadline.getTime())) {
+          console.warn('Invalid date:', task.deadline);
+          deadline = new Date(); // 使用当前时间作为后备
         }
-      } catch (error) {
-        console.error('日期解析错误:', error);
+      } catch (e) {
+        console.error('Error parsing deadline:', e);
+        deadline = new Date();
       }
-      
-      // 确保价格是一个有效的数字
-      let reward = null;
-      if (task.price !== undefined && task.price !== null) {
-        reward = Number(task.price);
-        if (isNaN(reward)) {
-          reward = null;
-        }
-      }
-      
-      // 开发阶段调试信息
-      console.log('任务价格:', task.price, '转换后:', reward);
-      
+
       return {
         id: task.taskId,
-        type: taskType,
-        title: task.title,
-        description: task.description || '暂无描述',
-        reward: reward,
-        status: task.status === 0 ? 'pending' : task.status === 1 ? 'accepted' : 'completed',
-        location: task.pickupLocation || '未指定位置',
-        deadline: deadlineText,
-        publisher: {
-          avatar: task.userAvatar || '/images/default-avatar.png',
-          nickname: task.userNickname || `用户${task.userId}`
-        }
+        type: this.mapTaskType(task.taskType),
+        title: task.title || '未命名任务',
+        description: task.description || '',
+        reward: task.price || 0,
+        location: task.pickupLocation || '',
+        deadline: deadline,
+        status: this.mapTaskStatus(task.status),
+        createTime: task.createdAt,
+        updateTime: task.updatedAt
       };
-    });
+    }).filter(Boolean); // 过滤掉null值
   },
 
   /**
@@ -523,32 +496,40 @@ Page({
   },
 
   /**
-   * 应用筛选条件
+   * 格式化日期字符串为iOS兼容格式
+   */
+  formatDateString(dateStr) {
+    if (!dateStr) return '';
+    // 将空格分隔的格式转换为T分隔
+    if (dateStr.includes(' ')) {
+      dateStr = dateStr.replace(' ', 'T');
+    }
+    // 如果没有T，添加时间部分
+    if (!dateStr.includes('T')) {
+      dateStr += 'T00:00:00';
+    }
+    return dateStr;
+  },
+
+  /**
+   * 应用不同的排序规则
    */
   applyFilter(filter, taskList = null) {
-    // 如果没有提供任务列表，使用原始任务列表或已分类的任务列表
-    let tasks = taskList;
-    if (!tasks) {
-      if (this.data.currentCategory !== 0) {
-        const categoryTypes = ['express', 'errand', 'food', 'other'];
-        const targetType = categoryTypes[this.data.currentCategory - 1];
-        tasks = this.data.originalTasks.filter(task => task.type === targetType);
-      } else {
-        tasks = [...this.data.originalTasks];
-      }
-    }
+    let tasks = taskList || this.data.tasks;
     
     // 应用不同的排序规则
     switch (filter) {
       case 'latest':
         // 按发布时间排序，最新的在前
-        tasks.sort((a, b) => new Date(b.createTime) - new Date(a.createTime));
+        tasks.sort((a, b) => {
+          const dateA = new Date(this.formatDateString(a.createTime));
+          const dateB = new Date(this.formatDateString(b.createTime));
+          return dateB - dateA;
+        });
         break;
       case 'nearby':
-        // 按距离排序，这里需要用户位置信息，模拟实现
-        // 实际应用中应该使用真实的地理位置计算
+        // 按距离排序
         tasks.sort((a, b) => {
-          // 假设用户在主校区，以用户的位置作为排序依据
           const distanceA = a.location.includes(this.data.currentCampus) ? 0 : 1;
           const distanceB = b.location.includes(this.data.currentCampus) ? 0 : 1;
           return distanceA - distanceB;
@@ -893,5 +874,28 @@ Page({
       icon: 'none',
       duration: 2000
     });
+  },
+
+  // 映射任务类型
+  mapTaskType(type) {
+    const typeMap = {
+      0: 'express',
+      1: 'errand',
+      2: 'shopping',
+      3: 'print',
+      4: 'other'
+    };
+    return typeMap[type] || 'other';
+  },
+
+  // 映射任务状态
+  mapTaskStatus(status) {
+    const statusMap = {
+      0: 'pending',
+      1: 'accepted',
+      2: 'completed',
+      3: 'cancelled'
+    };
+    return statusMap[status] || 'pending';
   }
 })

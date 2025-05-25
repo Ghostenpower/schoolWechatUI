@@ -19,6 +19,10 @@ Page({
     this.loadUserInfo();
   },
 
+  onShow() {
+    this.loadUserInfo();
+  },
+
   // 下拉刷新
   onPullDownRefresh() {
     console.log('触发下拉刷新');

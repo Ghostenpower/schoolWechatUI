@@ -13,6 +13,15 @@ Page({
     keyword: '',
     from: '', // 来源：recommend, hot
     isSearchMode: false,
+    total: 0, // 添加总数记录
+    currentStatus: 0, // 当前选中的状态：0-待接单，1-进行中，2-已完成，3-已取消
+    tasksType: -1, // 当前任务类型：-1-全部, 0-快递, 1-跑腿, 2-代购, 3-打印, 4-其他
+    statusList: [
+      { id: 0, name: '待接单' },
+      { id: 1, name: '进行中' },
+      { id: 2, name: '已完成' },
+      { id: 3, name: '已取消' }
+    ]
   },
 
   /**
@@ -81,7 +90,6 @@ Page({
    */
   loadTasks: function (isRefresh = false) {
     const app = getApp();
-    // 获取存储的token
     const token = wx.getStorageSync('token');
     const baseUrl = app.globalData.baseUrl;
     
@@ -89,8 +97,13 @@ Page({
       this.setData({
         page: 1,
         tasks: [],
-        hasMore: true
+        hasMore: true,
+        total: 0
       });
+    }
+    
+    if (!this.data.hasMore && !isRefresh) {
+      return;
     }
     
     this.setData({
@@ -98,54 +111,37 @@ Page({
     });
     
     wx.request({
-      url: baseUrl + '/api/tasks/all',
-      method: 'GET',
+      url: baseUrl + '/api/tasks/getListByStatus',
+      method: 'POST',
       data: {
         pageNum: this.data.page,
-        pageSize: this.data.pageSize
+        pageSize: this.data.pageSize,
+        taskStatus: this.data.currentStatus,
+        tasksType: this.data.tasksType
       },
       header: {
-        'token': token
+        'token': token,
+        'content-type': 'application/x-www-form-urlencoded'
       },
       success: (res) => {
-        console.log('API响应数据:', res.data);
         if (res.data.code === 1 && res.data.data) {
           const { total, list } = res.data.data;
           const formattedTasks = this.formatApiTasks(list);
-          // 分类过滤
+          
+          // 只有待接单状态才需要过滤过期任务
           let filteredTasks = formattedTasks;
-          if (this.data.currentCategory && this.data.currentCategory !== 'all') {
-            filteredTasks = formattedTasks.filter(task => task.type === this.data.currentCategory);
+          if (this.data.currentStatus === 0) {
+            const now = new Date();
+            filteredTasks = formattedTasks.filter(task => {
+              let deadline = this.parseDeadline(task.deadline);
+              return deadline > now;
+            });
           }
-          const now = new Date();
-          filteredTasks = filteredTasks.filter(task => {
-            let deadline = task.deadline;
-            if (typeof deadline === 'string' && deadline.indexOf('月') > -1) {
-              // 兼容"11月15日 14:30"格式
-              const match = deadline.match(/(\d+)月(\d+)日 (\d+):(\d+)/);
-              if (match) {
-                const month = parseInt(match[1], 10) - 1;
-                const day = parseInt(match[2], 10);
-                const hour = parseInt(match[3], 10);
-                const minute = parseInt(match[4], 10);
-                const year = new Date().getFullYear();
-                deadline = new Date(year, month, day, hour, minute);
-              } else {
-                deadline = now; // 解析失败，直接不过滤
-              }
-            } else {
-              deadline = new Date(deadline.replace(/-/g, '/'));
-            }
-            return task.status === 'pending' && deadline > now;
-          });
-          const hasMore = this.data.tasks.length + filteredTasks.length < total;
 
           // 批量获取头像昵称
-          console.log('批量请求用户信息 userIds:', filteredTasks.map(t => t.userId));
           Promise.all(filteredTasks.map(task => {
             return new Promise((resolve) => {
               if (!task.userId) {
-                console.warn('任务缺少userId:', task);
                 resolve({
                   ...task,
                   publisher: {
@@ -162,7 +158,6 @@ Page({
                   'token': wx.getStorageSync('token')
                 },
                 success: (userRes) => {
-                  console.log('用户信息接口响应:', userRes);
                   if (userRes.data && userRes.data.code === 1 && userRes.data.data) {
                     resolve({
                       ...task,
@@ -194,12 +189,10 @@ Page({
               });
             });
           })).then(tasksWithUser => {
-            console.log('批量用户信息合并后:', tasksWithUser);
             let newTasks;
             if (this.data.page === 1) {
               newTasks = tasksWithUser;
             } else {
-              // 只在末尾追加新数据，且用id去重，顺序不变
               const idSet = new Set(this.data.tasks.map(item => item.id));
               newTasks = [...this.data.tasks];
               tasksWithUser.forEach(item => {
@@ -208,11 +201,15 @@ Page({
                 }
               });
             }
+            
+            // 修正hasMore的判断逻辑
             const hasMore = newTasks.length < total;
+            
             this.setData({
               loading: false,
               tasks: newTasks,
-              hasMore: hasMore
+              hasMore: hasMore,
+              total: total
             });
           });
         } else {
@@ -336,8 +333,31 @@ Page({
     const category = e.currentTarget.dataset.category;
     if (category === this.data.currentCategory) return;
     
+    let tasksType = 4; // Default to 'other'
+    switch (category) {
+      case 'all':
+        tasksType = -1; // 全部
+        break;
+      case 'express':
+        tasksType = 0;
+        break;
+      case 'errand':
+        tasksType = 1;
+        break;
+      case 'shopping':
+        tasksType = 2;
+        break;
+      case 'print':
+        tasksType = 3;
+        break;
+      case 'other':
+        tasksType = 4;
+        break;
+    }
+    
     this.setData({
       currentCategory: category,
+      tasksType: tasksType,
       page: 1,
       tasks: [],
       hasMore: true
@@ -483,18 +503,28 @@ Page({
     const app = getApp();
     const token = wx.getStorageSync('token');
     const baseUrl = app.globalData.baseUrl;
+    
+    if (!this.data.hasMore && this.data.page > 1) {
+      return;
+    }
+    
     this.setData({ loading: true });
+    
     wx.request({
-      url: `${baseUrl}/api/tasks/search?keyword=${encodeURIComponent(keyword)}`,
+      url: `${baseUrl}/api/tasks/search`,
       method: 'GET',
+      data: {
+        keyword: keyword,
+        pageNum: this.data.page,
+        pageSize: this.data.pageSize
+      },
       header: { 'token': token },
       success: (res) => {
         console.log('接口原始返回:', res.data);
-        this.setData({ loading: false });
         if (res.data.code === 1 && res.data.data && Array.isArray(res.data.data.list)) {
-          // 用 formatApiTasks 格式化
-          const formattedTasks = this.formatApiTasks(res.data.data.list);
-          // 批量补全用户信息
+          const { total, list } = res.data.data;
+          const formattedTasks = this.formatApiTasks(list);
+          
           Promise.all(formattedTasks.map(task => {
             return new Promise((resolve) => {
               if (!task.userId) {
@@ -521,14 +551,44 @@ Page({
             });
           })).then(tasksWithUser => {
             console.log('搜索结果:', tasksWithUser);
-            this.setData({ tasks: tasksWithUser, hasMore: false });
+            let newTasks;
+            if (this.data.page === 1) {
+              newTasks = tasksWithUser;
+            } else {
+              const idSet = new Set(this.data.tasks.map(item => item.id));
+              newTasks = [...this.data.tasks];
+              tasksWithUser.forEach(item => {
+                if (!idSet.has(item.id)) {
+                  newTasks.push(item);
+                }
+              });
+            }
+            
+            const hasMore = newTasks.length < total;
+            
+            this.setData({ 
+              loading: false,
+              tasks: newTasks,
+              hasMore: hasMore,
+              total: total
+            });
           });
         } else {
-          this.setData({ tasks: [], hasMore: false });
+          this.setData({ 
+            loading: false,
+            tasks: [],
+            hasMore: false,
+            total: 0
+          });
         }
       },
       fail: () => {
-        this.setData({ loading: false, tasks: [], hasMore: false });
+        this.setData({ 
+          loading: false,
+          tasks: [],
+          hasMore: false,
+          total: 0
+        });
         wx.showToast({ title: '搜索失败', icon: 'none' });
       }
     });
@@ -537,5 +597,64 @@ Page({
   applyCategoryFilter: function(category) {
     if (this.data.isSearchMode) return;
     // ...原有分类过滤逻辑...
-  }
+  },
+
+  /**
+   * 切换任务状态
+   */
+  onStatusChange(e) {
+    const status = parseInt(e.currentTarget.dataset.status);
+    if (status === this.data.currentStatus) return;
+    
+    this.setData({
+      currentStatus: status,
+      page: 1,
+      tasks: [],
+      hasMore: true,
+      loading: true
+    });
+    
+    this.loadTasks();
+  },
+
+  /**
+   * 解析截止时间
+   */
+  parseDeadline(dateStr) {
+    if (!dateStr) return new Date();
+    
+    try {
+      // 处理"x月x日 xx:xx"格式
+      if (typeof dateStr === 'string' && dateStr.indexOf('月') > -1) {
+        const match = dateStr.match(/(\d+)月(\d+)日 (\d+):(\d+)/);
+        if (match) {
+          const month = parseInt(match[1], 10) - 1;
+          const day = parseInt(match[2], 10);
+          const hour = parseInt(match[3], 10);
+          const minute = parseInt(match[4], 10);
+          const year = new Date().getFullYear();
+          return new Date(year, month, day, hour, minute);
+        }
+      }
+      
+      // 处理标准日期格式
+      if (dateStr.includes(' ')) {
+        dateStr = dateStr.replace(' ', 'T');
+      }
+      if (!dateStr.includes('T')) {
+        dateStr += 'T00:00:00';
+      }
+      
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) {
+        // 如果日期无效，尝试替代解析方法
+        const parts = dateStr.split(/[- :T]/).map(part => parseInt(part, 10));
+        return new Date(parts[0], parts[1] - 1, parts[2], parts[3] || 0, parts[4] || 0, parts[5] || 0);
+      }
+      return d;
+    } catch (e) {
+      console.error('日期解析错误:', e);
+      return new Date();
+    }
+  },
 }) 
