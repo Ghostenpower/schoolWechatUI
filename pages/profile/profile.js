@@ -16,7 +16,8 @@ Page({
     stats: {
       orderCount: 0,
       balance: '0.00'
-    }
+    },
+    userRole: '普通用户'
   },
 
   /**
@@ -34,6 +35,7 @@ Page({
     // 刷新用户信息和统计数据
     this.getUserInfo()
     this.getUserStats()
+    this.checkUserRole()
   },
 
   logout() {
@@ -210,6 +212,37 @@ Page({
         this.setData({
           'stats.balance': '0.00'
         });
+      }
+    });
+  },
+
+  // 新增：检查用户角色（是否为跑腿员）
+  checkUserRole() {
+    const token = wx.getStorageSync('token');
+    if (!token) {
+      this.setData({ userRole: '普通用户' });
+      return;
+    }
+
+    wx.request({
+      url: `${app.globalData.baseUrl}/api/couriers/getCourierId`,
+      method: 'GET',
+      header: {
+        'token': token
+      },
+      success: (res) => {
+        if (res.data.code === 1 && res.data.data) {
+          // 如果返回成功且有数据，说明是跑腿员
+          this.setData({ userRole: '跑腿员' });
+        } else {
+          // 否则是普通用户（包括接口返回错误或跑腿员不存在）
+          this.setData({ userRole: '普通用户' });
+        }
+      },
+      fail: (err) => {
+        console.error('检查用户角色请求失败:', err);
+        // 网络错误或其他失败情况，默认为普通用户
+        this.setData({ userRole: '普通用户' });
       }
     });
   },

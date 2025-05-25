@@ -1,7 +1,7 @@
 /* pages/profile/profile.wxss */
 .profile {
-  min-height: 100vh;
   background-color: #f7f7f7;
+  min-height: 100vh;
 }
 
 /* 用户信息区域 */
@@ -10,6 +10,9 @@
   padding: 40rpx 30rpx;
   background: #27BA9B;
   color: #fff;
+  margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
 }
 
 .avatar-wrapper {
@@ -22,12 +25,29 @@
   height: 120rpx;
   border-radius: 50%;
   border: 4rpx solid #fff;
+  margin-right: 30rpx;
+}
+
+.user-name-wrapper {
+  display: flex;
+  align-items: center;
 }
 
 .user-name {
-  margin-left: 30rpx;
   font-size: 32rpx;
   font-weight: bold;
+  color: #fff;
+  margin-right: 15rpx;
+}
+
+.user-role-tag {
+  font-size: 22rpx;
+  color: #27BA9B;
+  background-color: #fff;
+  padding: 4rpx 12rpx;
+  border-radius: 20rpx;
+  display: inline-block;
+  line-height: 1;
 }
 
 .login-btn {
@@ -37,17 +57,18 @@
   transform: translateY(-50%);
   background: rgba(255, 255, 255, 0.2);
   color: #fff;
-  font-size: 28rpx;
   padding: 12rpx 30rpx;
   border-radius: 30rpx;
   border: 2rpx solid #fff;
+  font-size: 28rpx;
 }
 
 /* 用户数据概览 */
 .user-stats {
   display: flex;
+  justify-content: space-around;
   padding: 30rpx 0;
-  background: #fff;
+  background-color: #fff;
   margin-bottom: 20rpx;
 }
 
@@ -77,7 +98,7 @@
 
 /* 功能列表 */
 .menu-list {
-  background: #fff;
+  background-color: #fff;
   padding: 0 30rpx;
 }
 
@@ -89,23 +110,28 @@
   border-bottom: 2rpx solid #eee;
 }
 
+.menu-item:last-child {
+  border-bottom: none;
+}
+
 .menu-item-left {
   display: flex;
   align-items: center;
+  flex-grow: 1;
 }
 
-.menu-item .icon {
+.menu-item-left .icon {
   width: 40rpx;
   height: 40rpx;
   margin-right: 20rpx;
 }
 
-.menu-item text {
+.menu-item-left text {
   font-size: 28rpx;
   color: #333;
 }
 
-.menu-item .arrow {
+.arrow {
   width: 32rpx;
   height: 32rpx;
 }

@@ -33,17 +33,6 @@
     </view>
   </view>
 
-  <!-- 状态切换栏 -->
-  <view class="status-bar">
-    <view 
-      class="status-item {{currentStatus === item.id ? 'active' : ''}}" 
-      wx:for="{{statusList}}" 
-      wx:key="id"
-      bindtap="onStatusChange"
-      data-status="{{item.id}}">
-      {{item.name}}
-    </view>
-  </view>
 
   <!-- 任务列表 -->
   <scroll-view 
