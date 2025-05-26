@@ -105,7 +105,7 @@ Page({
             .filter(url => url)
             .map(url => url.startsWith('http') || url.startsWith('https') ? url : baseUrl + url) : [];
           // 发布者信息（当前用户）
-          t.publisher = { avatar: '/images/default-avatar.png', nickname: `用户${found.userId}` };
+          t.publisher = { avatar: '/images/default-avatar.png', nickname: `用户${found.userId}`, phone: '' };
           // 接单者信息
           t.acceptor = null;
           t.packageInfo = {
@@ -125,7 +125,8 @@ Page({
               if (userRes.data && userRes.data.code === 1 && userRes.data.data) {
                 t.publisher = {
                   avatar: userRes.data.data.avatarUrl || '/images/default-avatar.png',
-                  nickname: userRes.data.data.username || `用户${found.userId}`
+                  nickname: userRes.data.data.username || `用户${found.userId}`,
+                  phone: userRes.data.data.phone
                 };
               }
               this.setData({ task: t, loading: false }, () => {
@@ -226,7 +227,7 @@ Page({
                         title: '接单成功',
                         icon: 'success'
                       });
-                      this.setData({ 'task.status': 'accepted', showCompleteBtn: false, successTip: '接单成功，可在"我的订单"处完成任务' });
+                      this.setData({ 'task.status': 'accepted', showCompleteBtn: false, successTip: '接单成功，可在"我的订单"处完成后续操作。' });
                       wx.setStorageSync('shouldRefreshList', true);
                     } else {
                       wx.showToast({
@@ -268,11 +269,7 @@ Page({
       success: res => {
         if (res.tapIndex === 0) {
           // 电话联系
-          if (this.data.task.publisher.phone) {
-            wx.makePhoneCall({ phoneNumber: this.data.task.publisher.phone });
-          } else {
-            wx.showToast({ title: '无效的电话号码', icon: 'none' });
-          }
+          wx.makePhoneCall({ phoneNumber: this.data.task.publisher.phone });
         } else if (res.tapIndex === 1) {
           const targetUserId = this.data.task.userId;
           if (!targetUserId) {

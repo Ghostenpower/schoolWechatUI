@@ -20,7 +20,10 @@
     "pages/chat/detail/index",
     "pages/login/login",
     "pages/register/register",
-    "pages/rider/register/register"
+    "pages/rider/register/register",
+    "pages/privacy/index",
+    "pages/agreement/index",
+    "pages/about/index"
   ],
   "window": {
     "backgroundTextStyle": "light",

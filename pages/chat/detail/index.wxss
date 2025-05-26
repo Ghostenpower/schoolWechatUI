@@ -109,7 +109,7 @@
 }
 
 .self .message-bubble {
-  background-color: #95EC69;
+  background-color: #32d4b1;
 }
 
 .message-status {

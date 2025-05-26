@@ -1,0 +1,4 @@
+<!--pages/privacy/index.wxml-->
+<view class="container">
+  <rich-text nodes="{{privacyContent}}"></rich-text>
+</view> 

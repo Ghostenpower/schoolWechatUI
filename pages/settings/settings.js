@@ -133,21 +133,21 @@ Page({
   // 隐私政策
   onPrivacyPolicy() {
     wx.navigateTo({
-      url: '/pages/webview/index?url=https://example.com/privacy'
+      url: '/pages/privacy/index'
     })
   },
 
   // 用户协议
   onUserAgreement() {
     wx.navigateTo({
-      url: '/pages/webview/index?url=https://example.com/agreement'
+      url: '/pages/agreement/index'
     })
   },
 
   // 关于我们
   onAboutUs() {
     wx.navigateTo({
-      url: '/pages/webview/index?url=https://example.com/about'
+      url: '/pages/about/index'
     })
   }
 })
