@@ -10,9 +10,6 @@
         <text>检查更新</text>
         <text class="version">当前版本 {{version}}</text>
       </view>
-    </view>
-
-    <view class="settings-group">
       <view class="settings-item" bindtap="onPrivacyPolicy">
         <text>隐私政策</text>
         <image class="arrow" src="/images/icons/arrow-right.png" mode="aspectFit"/>
