@@ -402,7 +402,7 @@ Page({
             placeholderText: '请输入取消原因',
             success: (modalRes) => {
               if (modalRes.confirm) {
-                const cancelReason = modalRes.content || '用户主动取消';
+                const cancelReason = modalRes.content || '配送员主动取消';
                 
                 // 显示加载中
                 wx.showLoading({
@@ -433,7 +433,7 @@ Page({
                     
                     if (res.data.code === 1) {
                       // 本地更新订单状态
-                      this.updateOrderStatus(3, cancelReason);
+                      this.updateOrderStatus(4, cancelReason);
                       
                       // 展示成功动画
                       wx.showToast({
@@ -453,8 +453,8 @@ Page({
                           const prevPage = pages[pages.length - 2];
                           // 如果上一页是订单列表页且有updateLocalOrderStatus方法
                           if (prevPage && prevPage.route.includes('order/order') && prevPage.updateLocalOrderStatus) {
-                            console.log('通知列表页更新订单状态:', orderId, 3);
-                            prevPage.updateLocalOrderStatus(orderId, 3, cancelReason);
+                            console.log('通知列表页更新订单状态:', orderId, 4);
+                            prevPage.updateLocalOrderStatus(orderId, 4, cancelReason);
                           }
                           // 如果上一页有refreshOrders方法但不支持更新单个订单
                           else if (prevPage && prevPage.refreshOrders) {
@@ -581,7 +581,7 @@ Page({
     }
     
     // 如果是取消状态，设置取消时间和原因
-    if (newStatus === 3 && message) {
+    if (newStatus === 4 && message) {
       const now = new Date();
       orderInfo.cancelTime = now.toISOString();
       orderInfo.cancelTimeFormatted = this.formatTime(now);

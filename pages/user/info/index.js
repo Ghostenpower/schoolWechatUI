@@ -215,6 +215,23 @@ Page({
                       ...userInfo,  // 保留原有的所有信息
                       avatarUrl: result.data  // 只更新头像URL
                     };
+
+                    // 更新聊天系统头像
+                    const chatUrl = getApp().globalData.chatUrl;
+                    wx.request({
+                      url: `${chatUrl}/api/users/updateAvatar`,
+                      method: 'POST',
+                      data: {
+                        userId: userInfo.userId,  
+                        avatarUrl: result.data
+                      },
+                      success: (chatRes) => {
+                        console.log('更新聊天系统头像响应:', chatRes);
+                      },
+                      fail: (err) => {
+                        console.error('更新聊天系统头像失败:', err);
+                      }
+                    });
                     
                     // 更新本地存储
                     wx.setStorageSync('userInfo', updatedUserInfo);

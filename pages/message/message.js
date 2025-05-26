@@ -1,174 +1,212 @@
 const app = getApp()
+const socketManager = require('../../utils/socketManager')
+
+// 添加sleep函数，用于延时
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 Page({
   data: {
     messages: [],
     userId: null,
     isLoading: false,
-    error: null
+    error: null,
+    refreshInterval: 3000, // 刷新间隔，默认3秒
+    lastRefreshTime: 0
+  },
+
+  async loadMessages() {
+    // 如果正在加载，避免重复请求
+    if (this.data.isLoading) return;
+
+    this.setData({
+      isLoading: true,
+      error: null
+    });
+
+    try {
+      const chatUrl = app.globalData.chatUrl;
+      const userId = wx.getStorageSync('userInfo').userId;
+
+      // 使用Promise包装wx.request
+      const response = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${chatUrl}/api/getChatList`,
+          method: 'POST',
+          data: { userId },
+          header: {
+            'content-type': 'application/json'
+          },
+          success: (res) => resolve(res.data),
+          fail: (err) => reject(err)
+        });
+      });
+
+      if (response.code === 1 && response.data && response.data.chatList) {
+        // 获取第一个用户的聊天列表（因为返回格式是数组，但我们只需要当前用户的）
+        const userChatList = response.data.chatList[0]?.chatList || [];
+
+        // 格式化消息列表
+        const formattedMessages = userChatList.map(chat => ({
+          id: chat.otherId,
+          name: chat.otherName,
+          avatar: chat.otherAvatar || '/assets/images/default-avatar.png',
+          lastMessage: chat.lastMessage,
+          unReadCount: chat.unReadCount,
+          time: this.formatTime(chat.lastMessageTime),
+          lastMessageTime: chat.lastMessageTime // 保留原始时间戳用于比较
+        }));
+
+        // 准备更新数据
+        const currentMessages = this.data.messages;
+        const updatedData = {};
+        let hasChanges = false;
+
+        // 创建当前消息的映射
+        const currentMessagesMap = {};
+        for (let i = 0; i < currentMessages.length; i++) {
+          const msg = currentMessages[i];
+          currentMessagesMap[msg.id] = {
+            msg: msg,
+            index: i
+          };
+        }
+
+        // 检查新消息是否需要更新
+        const newMessages = [];
+        for (let i = 0; i < formattedMessages.length; i++) {
+          const newMsg = formattedMessages[i];
+          const current = currentMessagesMap[newMsg.id];
+
+          if (current) {
+            // 消息已存在，检查是否有变化
+            const oldMsg = current.msg;
+            const needsUpdate =
+              newMsg.lastMessage !== oldMsg.lastMessage ||
+              newMsg.unReadCount !== oldMsg.unReadCount ||
+              newMsg.lastMessageTime !== oldMsg.lastMessageTime ||
+              newMsg.name !== oldMsg.name ||
+              newMsg.avatar !== oldMsg.avatar;
+
+            if (needsUpdate) {
+              // 只更新发生变化的特定消息项
+              updatedData[`messages[${current.index}]`] = newMsg;
+              hasChanges = true;
+            }
+
+            // 保留在新列表中，保持原来的顺序
+            newMessages.push(current.index);
+          } else {
+            // 新消息，需要添加
+            newMessages.push(-1); // 标记为新消息
+            hasChanges = true;
+          }
+        }
+
+        // 检查是否有消息被删除或顺序变化
+        if (formattedMessages.length !== currentMessages.length) {
+          hasChanges = true;
+        }
+
+        // 如果有变化，更新UI
+        if (hasChanges) {
+          // 如果消息数量或顺序变化，需要完全替换列表
+          if (formattedMessages.length !== currentMessages.length || newMessages.some((idx, i) => idx !== i && idx !== -1)) {
+            updatedData.messages = formattedMessages;
+          }
+
+          // 应用所有更新
+          this.setData(updatedData);
+        }
+
+        // 无论数据是否变化，都更新加载状态和刷新时间
+        this.setData({
+          isLoading: false,
+          lastRefreshTime: Date.now()
+        });
+      } else {
+        throw new Error(response.message || '获取消息列表失败');
+      }
+    } catch (error) {
+      console.error('加载消息列表失败:', error);
+      this.setData({
+        error: error.message || '加载消息列表失败，请稍后重试',
+        isLoading: false
+      });
+    }
+  },
+
+  // 启动定时刷新
+  startRefreshTimer() {
+    // 清除可能存在的旧定时器
+    this.clearRefreshTimer();
+
+    // 创建新定时器
+    this.refreshTimer = setInterval(() => {
+      this.loadMessages();
+    }, this.data.refreshInterval);
+
+  },
+
+  // 清除定时刷新
+  clearRefreshTimer() {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
   },
 
   onLoad() {
-    // 获取用户ID
-    const userInfo = wx.getStorageSync('userInfo');
-    if (userInfo && userInfo.userId) {
-      this.setData({ userId: userInfo.userId });
-      this.loadMessages();
-      this.setupMessageHandler();
-    } else {
-      this.setData({ error: '请先登录' });
-      wx.showToast({
-        title: '请先登录',
-        icon: 'none'
-      });
-    }
-  },
+    const userId = wx.getStorageSync('userInfo').userId;
+    this.setData({ userId });
 
-  // 设置消息处理器
-  setupMessageHandler() {
-    const socketManager = app.globalData.socketManager;
-    
-    // 添加消息处理函数
+    // 初始加载消息列表
+    this.loadMessages();
+
+    // 启动定时刷新
+    this.startRefreshTimer();
+
+    // 添加消息处理器，用于实时更新消息列表
     this.messageHandler = (message) => {
-      // 更新对应的会话
-      const messages = [...this.data.messages];
-      const chatIndex = messages.findIndex(m => 
-        m.id === message.sender_id || m.id === message.receiver_id
-      );
-
-      if (chatIndex >= 0) {
-        // 更新现有会话
-        messages[chatIndex] = {
-          ...messages[chatIndex],
-          lastMessage: message.content,
-          timestamp: new Date(message.createdAt).getTime(),
-          time: this.formatTime(message.createdAt),
-          unread: message.receiver_id === this.data.userId ? messages[chatIndex].unread + 1 : messages[chatIndex].unread
-        };
-      } else {
-        // 添加新会话
-        this.loadMessages(); // 重新加载完整列表
+      // 收到新消息时刷新列表
+      const now = Date.now();
+      // 限制刷新频率，至少间隔5秒
+      if (now - this.data.lastRefreshTime > 5000) {
+        this.loadMessages();
       }
-
-      // 按时间排序
-      messages.sort((a, b) => b.timestamp - a.timestamp);
-      
-      this.setData({ messages });
     };
-    
+
+    // 注册消息处理器
     socketManager.addMessageHandler(this.messageHandler);
   },
 
-  // 加载消息列表
-  async loadMessages() {
-    if (this.data.isLoading) return;
+  onShow() {
     
-    this.setData({ 
-      isLoading: true,
-      error: null 
-    });
-    
-    wx.showLoading({ title: '加载中...' });
-    
-    try {
-      const res = await new Promise((resolve, reject) => {
-        wx.request({
-          url: `https://campu-run-chat.megajam.online/api/users/${this.data.userId}/chats`,
-          method: 'GET',
-          success: resolve,
-          fail: reject
-        });
-      });
+    //刷新列表
+    this.loadMessages();
 
-      console.log('获取到的聊天列表数据:', res.data);
-
-      if (res.statusCode === 200 && Array.isArray(res.data)) {
-        // 处理消息列表数据
-        const messages = res.data.map(chat => {
-          // 确保user和lastMessage字段存在
-          const user = chat.user || {};
-          const lastMessage = chat.lastMessage || {};
-          
-          return {
-            id: chat._id || '',
-            name: user.username || '未知用户',
-            avatar: user.avatar_url || '/assets/default-avatar.png',
-            lastMessage: lastMessage.content || '',
-            timestamp: lastMessage.createdAt ? new Date(lastMessage.createdAt).getTime() : 0,
-            time: lastMessage.createdAt ? this.formatTime(lastMessage.createdAt) : '',
-            unread: chat.unreadCount || 0
-          };
-        });
-
-        // 按时间排序
-        messages.sort((a, b) => b.timestamp - a.timestamp);
-        
-        console.log('处理后的消息列表:', messages);
-        this.setData({ messages });
-      } else {
-        throw new Error(res.data?.error || '获取消息列表失败');
-      }
-    } catch (err) {
-      console.error('获取消息列表失败:', err);
-      this.setData({ 
-        error: err.message || '获取消息失败'
-      });
-      wx.showToast({
-        title: err.message || '获取消息失败',
-        icon: 'none',
-        duration: 2000
-      });
-    } finally {
-      this.setData({ isLoading: false });
-      wx.hideLoading();
-    }
+    // 恢复定时器
+    this.startRefreshTimer();
   },
 
-  onShow() {
-    // 页面显示时获取最新的用户信息和刷新消息列表
-    const userInfo = wx.getStorageSync('userInfo');
-    
-    // 检查用户是否已登录并且用户ID是否有变化
-    if (userInfo && userInfo.userId) {
-      if (this.data.userId !== userInfo.userId) {
-        // 用户ID变化，更新用户ID并重新初始化
-        console.log('检测到用户ID变化，从', this.data.userId, '变为', userInfo.userId);
-        this.setData({ userId: userInfo.userId });
-        
-        // 重新设置消息处理器
-        if (this.messageHandler) {
-          app.globalData.socketManager.removeMessageHandler(this.messageHandler);
-          this.setupMessageHandler();
-        }
-      }
-      
-      // 重新加载消息列表
-      this.loadMessages();
-    } else if (this.data.userId) {
-      // 用户已登出，清除数据
-      this.setData({ 
-        userId: null,
-        messages: [],
-        error: '请先登录'
-      });
-      
-      // 移除消息处理器
-      if (this.messageHandler) {
-        app.globalData.socketManager.removeMessageHandler(this.messageHandler);
-        this.messageHandler = null;
-      }
-      
-      wx.showToast({
-        title: '请先登录',
-        icon: 'none'
-      });
-    }
+  onHide() {
+    // 页面隐藏时记录时间，并暂停定时器
+    this.setData({
+      lastRefreshTime: Date.now()
+    });
+
+    // 暂停定时器
+    this.clearRefreshTimer();
   },
 
   onUnload() {
-    // 清理消息处理器
+    // 页面卸载时清除定时器和消息处理器
+    this.clearRefreshTimer();
+
+    // 移除消息处理器
     if (this.messageHandler) {
-      app.globalData.socketManager.removeMessageHandler(this.messageHandler);
+      socketManager.removeMessageHandler(this.messageHandler);
     }
   },
 
@@ -176,12 +214,16 @@ Page({
   onPullDownRefresh() {
     this.loadMessages().then(() => {
       wx.stopPullDownRefresh();
-        });
+    });
   },
 
   // 点击会话
   onTapChat(e) {
     const { id } = e.currentTarget.dataset;
+    
+    // 在导航前暂停定时器
+    this.clearRefreshTimer();
+    
     wx.navigateTo({
       url: `/pages/chat/detail/index?targetId=${id}`
     });
@@ -189,10 +231,12 @@ Page({
 
   // 格式化时间
   formatTime(timestamp) {
+    if (!timestamp) return '';
+
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now - date;
-    
+
     // 今天的消息只显示时间
     if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
       return date.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' });

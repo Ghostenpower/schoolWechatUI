@@ -35,6 +35,10 @@ Component({
     }
   },
 
+  onShow() {
+    this.loadOrders();
+  },
+
   lifetimes: {
     attached() {
       this.setData({ activeTab: this.properties.initialActiveTab });
@@ -127,18 +131,22 @@ Component({
         default: orderStatus = 0;
       }
 
+      // 创建FormData对象
+      const formData = {
+        pageNum: this.data.pageNum,
+        pageSize: this.data.pageSize,
+        orderStatus: orderStatus
+      };
+
       return new Promise((resolve, reject) => {
         wx.request({
           url: `${app.globalData.baseUrl}/api/orders/getList`,
-          method: 'GET',
+          method: 'get',  // 改为POST方法
           header: {
+            'content-type': 'application/json',
             'token': wx.getStorageSync('token') || 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjIsImV4cCI6MTc0NTExNzgxNX0.EmNpLFqFYpGlpftfiaeRyDWDmHFVzqhZ5G-sQURohrE'
           },
-          data: {
-            pageNum: this.data.pageNum,
-            pageSize: this.data.pageSize,
-            orderStatus: orderStatus
-          },
+          data: formData,  // 使用formData对象
           success: (res) => {
             if (res.data.code === 1) {
               const newOrders = this._processOrderData(res.data.data.list || []);

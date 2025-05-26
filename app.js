@@ -1,41 +1,104 @@
 // app.js
-const socketManager = require('./utils/socketManager');
+const config = require('./config/index')
 
 App({
   globalData: {
     userInfo: null,
-    baseUrl: 'https://run-backend.megajam.online', // API基础URL http://run-backend.megajam.online
-    // baseUrl: 'http://localhost:8051', // API基础URL http://run-backend.megajam.online
-    wsUrl: 'wss://campu-run-chat.megajam.online', // WebSocket服务器URL
-    chatUrl: 'https://campu-run-chat.megajam.online', // 聊天服务器URL
+    baseUrl: config.apiUrl,
+    chatUrl: config.chatUrl,
+    wsUrl: config.wsUrl,
     token: null,
-    socketManager: socketManager // 添加socketManager到globalData
+    unReadCount: 0,  // 未读消息总数
+    currentTabIndex: 0  // 当前选中的TabBar索引
   },
 
   onLaunch() {
-    // 监听网络状态变化
-    wx.onNetworkStatusChange((res) => {
-      if (res.isConnected) {
-        // 网络恢复时，如果有用户信息则重新连接socket
-        const userInfo = wx.getStorageSync('userInfo');
-        if (userInfo && userInfo.userId) {
-          socketManager.connect(userInfo.userId);
-        }
-      }
-    });
-
     // 初始化应用时运行的代码
     const token = wx.getStorageSync('token');
     if (token) {
       this.globalData.token = token;
     }
 
-    // 获取用户信息并初始化socket连接
+    // 展示本地存储能力
+    const logs = wx.getStorageSync('logs') || []
+    logs.unshift(Date.now())
+    wx.setStorageSync('logs', logs)
+    
+    // 获取用户信息
     const userInfo = wx.getStorageSync('userInfo');
-    if (userInfo && userInfo.userId) {
+    if (userInfo) {
       this.globalData.userInfo = userInfo;
-      socketManager.connect(userInfo.userId);
+      
+      // 启动未读消息检查定时器
+      this.startUnreadMessageTimer();
     }
+  },
+  
+  // 启动未读消息检查定时器
+  startUnreadMessageTimer() {
+    // 先清除可能存在的旧定时器
+    if (this.unreadMessageTimer) {
+      clearInterval(this.unreadMessageTimer);
+    }
+    
+    // 设置定时器定期检查未读消息
+    this.unreadMessageTimer = setInterval(() => {
+      this.checkUnreadMessages();
+    }, 3000); // 每3秒检查一次
+    
+    // 立即检查一次未读消息
+    this.checkUnreadMessages();
+  },
+  
+  // 检查未读消息
+  checkUnreadMessages() {
+    const userInfo = this.globalData.userInfo;
+    if (!userInfo || !userInfo.userId) return;
+    
+    // 确保userId是字符串
+    const userId = String(userInfo.userId);
+    
+    // 创建FormData对象
+    const formData = {
+      userId: userId
+    };
+    
+    wx.request({
+      url: `${this.globalData.chatUrl}/api/getUnReadCount`,
+      method: 'POST',
+      data: formData,
+      header: {
+        'content-type': 'application/json'
+      },
+      success: (res) => {
+        if (res.data && res.data.code === 1) {
+          const unReadCount = res.data.data.unReadCount || 0;
+          
+          // 更新全局未读消息数
+          this.globalData.unReadCount = unReadCount;
+          
+          // 更新TabBar的消息角标
+          if (unReadCount > 0) {
+            wx.setTabBarBadge({
+              index: 2, // 消息选项卡的索引，第三个标签页
+              text: unReadCount > 99 ? '99+' : unReadCount.toString()
+            }).catch(err => {
+              // 可能由于页面未准备好等原因导致设置失败，这里忽略错误
+            });
+          } else {
+            // 如果没有未读消息，移除角标
+            wx.removeTabBarBadge({
+              index: 2 // 消息选项卡的索引，第三个标签页
+            }).catch(err => {
+              // 忽略错误
+            });
+          }
+        }
+      },
+      fail: (err) => {
+        console.error('获取未读消息数失败', err);
+      }
+    });
   },
 
   // 用户登录成功后调用
@@ -44,8 +107,8 @@ App({
     this.globalData.userInfo = userInfo;
     wx.setStorageSync('userInfo', userInfo);
     
-    // 初始化socket连接
-    socketManager.connect(userInfo.userId);
+    // 启动未读消息检查定时器
+    this.startUnreadMessageTimer();
   },
 
   // 用户登出时调用
@@ -55,8 +118,11 @@ App({
     wx.removeStorageSync('userInfo');
     wx.removeStorageSync('token');
     
-    // 清理socket连接
-    socketManager.cleanup();
+    // 清除未读消息定时器
+    if (this.unreadMessageTimer) {
+      clearInterval(this.unreadMessageTimer);
+      this.unreadMessageTimer = null;
+    }
   },
 
   // 封装请求方法

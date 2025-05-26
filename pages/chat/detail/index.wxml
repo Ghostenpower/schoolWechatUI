@@ -1,44 +1,81 @@
 <view class="chat-container">
-  <!-- 聊天记录 -->
+  <!-- 聊天头部 - 固定在顶部 -->
+  <view class="chat-header">
+    <text class="chat-title">{{targetInfo.username || '聊天'}}</text>
+  </view>
+
+  <!-- 消息列表 - 可滚动区域 -->
   <scroll-view 
-    class="chat-list" 
-    scroll-y="true" 
+    class="message-list" 
+    scroll-y 
     scroll-into-view="{{scrollIntoView}}"
-    bindscrolltoupper="onScrollToUpper"
+    refresher-enabled="{{hasMore}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    enhanced="{{true}}"
+    show-scrollbar="{{false}}"
+    refresher-triggered="{{isLoading}}"
   >
-    <view 
-      class="chat-item {{item.senderId == userId ? 'self' : ''}}"
-      wx:for="{{messages}}"
-      wx:key="timestamp"
-      id="msg-{{index}}"
-    >
-      <image 
-        class="avatar" 
-        src="{{item.senderId == userId ? userInfo.avatarUrl : targetInfo.avatarUrl || '/static/default-avatar.png'}}"
-      />
-      <view class="message-content">
-        <view class="nickname">{{item.senderId == userId ? userInfo.username : targetInfo.username || '对方'}}</view>
-        <view class="message-bubble">{{item.content}}</view>
-        <view class="time">{{item.timeStr}}</view>
+    <!-- 顶部留白，确保不被头部遮挡 -->
+    <view class="header-placeholder"></view>
+    
+    <!-- 消息内容 -->
+    <view class="messages-container">
+      <!-- 加载指示器 -->
+      <view class="loading-more" wx:if="{{isLoading}}">
+        <view class="loading-icon"></view>
+        <text>加载更多消息...</text>
       </view>
+      
+      <!-- 没有更多消息提示 -->
+      <view class="no-more-messages" wx:if="{{!hasMore && messages.length > 0}}">
+        <text>没有更多消息了</text>
+      </view>
+      
+      <view 
+        class="message-item {{item.isSelf ? 'self' : ''}}" 
+        wx:for="{{messages}}"
+        wx:key="index"
+        id="msg-{{index}}"
+      >
+        <!-- 头像 -->
+        <image 
+          class="avatar" 
+          src="{{item.isSelf ? userInfo.avatarUrl : targetInfo.avatarUrl}}" 
+          mode="aspectFill"
+        />
+        
+        <!-- 消息内容 -->
+        <view class="message-content">
+          <view class="message-bubble">
+            {{item.content}}
+          </view>
+          <view class="message-status" wx:if="{{item.isSelf}}">
+            {{item.read ? '已读' : '未读'}}
+          </view>
+        </view>
+      </view>
+      
+      <!-- 底部留白，确保不被输入框遮挡 -->
+      <view class="footer-placeholder"></view>
     </view>
   </scroll-view>
 
-  <!-- 输入框区域 -->
+  <!-- 输入区域 - 固定在底部 -->
   <view class="input-area">
     <input 
       class="message-input"
-      type="text"
       value="{{inputMessage}}"
-      placeholder="请输入消息"
-      bindinput="onInputMessage"
-      bindconfirm="sendMessage"
+      bindinput="handleInputChange"
+      placeholder="输入消息..."
       confirm-type="send"
+      bindconfirm="handleSendMessage"
+      adjust-position="{{false}}"
+      cursor-spacing="{{20}}"
     />
     <button 
-      class="send-btn {{!inputMessage || inputMessage.trim() === '' ? 'disabled' : ''}}" 
-      bindtap="sendMessage"
-      disabled="{{!inputMessage || inputMessage.trim() === ''}}"
+      class="send-button {{!inputMessage ? 'disabled' : ''}}" 
+      bindtap="handleSendMessage"
+      disabled="{{!inputMessage}}"
     >发送</button>
   </view>
 </view> 

@@ -1,3 +1,6 @@
+// 获取小程序实例
+const app = getApp()
+
 /**
  * WebSocket基础连接管理器
  */
@@ -9,48 +12,14 @@ class SocketManager {
     this.maxReconnectDelay = 30000; // Maximum reconnect delay of 30 seconds
     this.connected = false;
     this.connecting = false;
-    this.userId = null;
+    this.userId = '';  // 确保初始值为字符串
     this.pendingMessages = []; // 存储待发送的消息
     
-    // 监听小程序生命周期事件
-    this.setupAppLifecycleListeners();
-  }
-  
-  /**
-   * 设置应用生命周期监听
-   */
-  setupAppLifecycleListeners() {
-    // 尝试获取全局App实例
-    const globalApp = getApp();
-    if (!globalApp) return;
-    
-    // 存储原始的生命周期函数
-    const originalOnShow = globalApp.onShow || function() {};
-    const originalOnHide = globalApp.onHide || function() {};
-    
-    // 增强onShow函数，当小程序进入前台时重新连接
-    globalApp.onShow = (options) => {
-      // 调用原始的onShow
-      originalOnShow.call(globalApp, options);
-      
-      // 如果有用户ID但未连接，重新连接
-      if (this.userId && (!this.connected || !this.socket)) {
-        console.log('应用进入前台，重新连接WebSocket');
-        this.connect(this.userId);
-      }
-      
-      // 发送所有挂起的消息
-      this.sendPendingMessages();
-    };
-    
-    // 增强onHide函数，监控应用进入后台
-    globalApp.onHide = () => {
-      // 调用原始的onHide
-      originalOnHide.call(globalApp);
-      
-      // 记录应用进入后台，但保持连接
-      console.log('应用进入后台，保持WebSocket连接');
-    };
+    // 确保app实例已经初始化
+    if (!app || !app.globalData || !app.globalData.wsUrl) {
+      console.error('WebSocket URL not configured in app.globalData');
+      return;
+    }
   }
 
   /**
@@ -59,7 +28,7 @@ class SocketManager {
    */
   connect(userId) {
     // Store userId for reconnection purposes
-    this.userId = userId;
+    this.userId = userId.toString();
     
     // Prevent multiple connection attempts
     if (this.connecting) {
@@ -74,10 +43,12 @@ class SocketManager {
     }
     
     this.connecting = true;
-    
 
     try {
-      const wsUrl = 'wss://campu-run-chat.megajam.online';
+      const wsUrl = app.globalData.wsUrl;
+      if (!wsUrl) {
+        throw new Error('WebSocket URL not configured');
+      }
 
       // 关闭现有连接
       if (this.socket) {
@@ -86,7 +57,7 @@ class SocketManager {
       }
 
       this.socket = wx.connectSocket({
-        url: `${wsUrl}?userId=${userId}`,
+        url: `${wsUrl}?userId=${this.userId}`,
         success: () => {
           console.log('WebSocket连接成功');
         },
@@ -111,23 +82,33 @@ class SocketManager {
 
       // 监听消息
       this.socket.onMessage((res) => {
-        console.log(res);
         try {
           const response = JSON.parse(res.data);
           console.log('收到消息:', response);
           
-          if (response.type === 'message') {
-            // 通知所有消息处理器
-            this.messageHandlers.forEach(handler => {
-              handler(response.data);
-            });
-            
-            // 播放消息提示音 (仅当消息不是自己发送的)
-            if (response.data && response.data.sender_id !== userId) {
-              this.playMessageTone();
-            }
-          } else if (response.type === 'error') {
-            console.error('服务器错误:', response.error);
+          switch (response.type) {
+            case 'connectionSuccess':
+              console.log('连接成功，用户ID:', response.userId);
+              break;
+              
+            case 'message':
+              // 直接传递原始消息对象给处理器
+              this.messageHandlers.forEach(handler => {
+                handler(response);
+              });
+              break;
+              
+            case 'isRead':
+              // 处理消息已读状态
+              this.messageHandlers.forEach(handler => {
+                if (handler.onMessageRead) {
+                  handler.onMessageRead(response.userId, response.otherId);
+                }
+              });
+              break;
+              
+            default:
+              console.log('未知消息类型:', response.type);
           }
         } catch (error) {
           console.error('解析消息失败:', error);
@@ -162,24 +143,11 @@ class SocketManager {
   }
 
   /**
-   * 播放消息提示音
-   */
-  playMessageTone() {
-    // 振动功能已禁用
-    console.log('收到新消息');
-    
-    // 如果需要音频提示，请确保先创建音频文件
-    // const innerAudioContext = wx.createInnerAudioContext();
-    // innerAudioContext.src = '/assets/audio/message.mp3'; 
-    // innerAudioContext.play();
-  }
-
-  /**
    * 处理重连逻辑
    */
   handleReconnect() {
-    if (!this.userId) {
-      console.log('没有用户ID，不进行重连');
+    if (!this.userId || !this.messageHandlers.size) {
+      console.log('没有活跃的聊天页面或用户ID，不进行重连');
       return;
     }
     
@@ -193,7 +161,7 @@ class SocketManager {
       // Check if we're still offline before attempting to reconnect
       wx.getNetworkType({
         success: (res) => {
-          if (res.networkType !== 'none' && !this.connected && !this.connecting) {
+          if (res.networkType !== 'none' && !this.connected && !this.connecting && this.messageHandlers.size) {
             this.connect(this.userId);
           }
         }
@@ -242,10 +210,46 @@ class SocketManager {
    * @param {Object} message 消息对象
    */
   send(message) {
+    // 确保消息格式正确
+    const formattedMessage = {
+      type: 'message',
+      senderId: message.fromId.toString(),
+      receiverId: message.toId.toString(),
+      content: message.content
+    };
+
     if (!this.socket || !this.connected) {
       console.log('WebSocket未连接，消息加入待发送队列');
-      // 将消息加入待发送队列
+      this.pendingMessages.push(formattedMessage);
+      
+      if (!this.connecting && this.userId) {
+        this.connect(this.userId);
+      }
+      return;
+    }
+
+    this.doSendMessage(formattedMessage);
+  }
+
+  /**
+   * 发送已读状态
+   * @param {string} userId 当前用户ID
+   * @param {string} otherId 对方用户ID
+   */
+  sendReadStatus(userId, otherId) {
+    const message = {
+      type: 'isRead',
+      userId: userId.toString(),
+      otherId: otherId.toString()
+    };
+
+    if (!this.socket || !this.connected) {
+      console.log('WebSocket未连接，已读状态加入待发送队列');
       this.pendingMessages.push(message);
+      
+      if (!this.connecting && this.userId) {
+        this.connect(this.userId);
+      }
       return;
     }
 
@@ -266,6 +270,11 @@ class SocketManager {
    */
   removeMessageHandler(handler) {
     this.messageHandlers.delete(handler);
+    
+    // 如果没有活跃的消息处理器，关闭连接
+    if (this.messageHandlers.size === 0) {
+      this.close();
+    }
   }
 
   /**
@@ -278,7 +287,7 @@ class SocketManager {
     }
     this.connected = false;
     this.connecting = false;
-    this.messageHandlers.clear();
+    this.pendingMessages = [];
   }
 
   /**
@@ -287,8 +296,8 @@ class SocketManager {
   cleanup() {
     this.close();
     this.reconnectAttempts = 0;
-    this.userId = null;
-    this.pendingMessages = [];
+    this.userId = '';
+    this.messageHandlers.clear();
   }
 }
 

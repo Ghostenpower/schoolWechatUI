@@ -14,7 +14,17 @@
         <view class="name">{{item.name}}</view>
         <view class="text">{{item.lastMessage}}</view>
       </view>
-      <view class="time">{{item.time}}</view>
+      <view class="right-content">
+        <view class="time">{{item.time}}</view>
+        <view class="unread-badge" wx:if="{{item.unReadCount > 0}}">
+          {{item.unReadCount}}
+        </view>
+      </view>
     </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-container" wx:if="{{!isLoading && !error && messages.length === 0}}">
+    <view class="empty-message">暂无消息</view>
   </view>
 </view> 

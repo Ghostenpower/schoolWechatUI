@@ -110,14 +110,18 @@ Page({
     let from = 'published';
     let showEditDelete = true;
 
+    // 创建FormData对象
+    const formData = {
+      pageNum: this.data.page,
+      pageSize: 10
+    };
+
     wx.request({
       url,
-      method: 'GET',
-      data: {
-        page: this.data.page,
-        pageSize: 10
-      },
+      method: 'POST',  // 改为POST方法
+      data: formData,  // 使用formData对象
       header: {
+        'content-type': 'application/x-www-form-urlencoded',
         'token': wx.getStorageSync('token')
       },
       success: (res) => {
@@ -442,6 +446,54 @@ Page({
                   icon: 'success'
                 })
                 this.refreshTasks()
+
+                // 获取配送员信息
+                let courierUserInfo = null;
+                wx.request({
+                  url: `${app.globalData.baseUrl}/api/users/getCourierUserInfoByTaskId`,
+                  method: 'POST',
+                  data: { taskId },
+                  header: {
+                    'token': wx.getStorageSync('token'),
+                    'content-type': 'application/x-www-form-urlencoded'
+                  },
+                  success: (res) => {
+                    if (res.statusCode === 200 && res.data && res.data.code === 1) {
+                      courierUserInfo = res.data.data;
+                      if (courierUserInfo) {
+                        // Handle courier user info as needed
+                        console.log('Courier User Info:', courierUserInfo);
+                        // 推送消息
+                        const chatUrl = getApp().globalData.chatUrl;
+                        const myUserInfo = wx.getStorageSync('userInfo');
+                        const myUserId = myUserInfo ? myUserInfo.userId : null;
+                        const messageContent = `我已确认收货，请查看配送费是否到账`;
+                        if (myUserId) {
+                          wx.request({
+                            url: `${chatUrl}/api/userPushMsgToUser`,
+                            method: 'POST',
+                            data: { userId: myUserId.toString(), content: messageContent, otherId: courierUserInfo.userId.toString() },
+                            success: () => {
+                              console.log('推送消息成功');
+                            },
+                            fail: () => {
+                              console.error('推送消息失败');
+                            }
+                          })
+                        }
+                      } else {
+                        console.error('No courier user info found');
+                      }
+                    } else {
+                      console.error('Failed to get courier user info');
+                    }
+                  },
+                  fail: () => {
+                    console.error('Failed to get courier user info');
+                  }
+                })
+
+
               } else {
                 wx.showToast({
                   title: (res.data && res.data.msg) ? res.data.msg : '确认收货失败',

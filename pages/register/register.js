@@ -49,7 +49,7 @@ Page({
       wx.hideLoading();
 
       res.data.code === 1
-        ? this.handleRegisterSuccess()
+        ? this.handleRegisterSuccess(res.data.data)
         : this.showError(res.data.msg || '注册失败，请重试');
     } catch (error) {
       wx.hideLoading();
@@ -72,11 +72,28 @@ Page({
     });
   },
 
-  handleRegisterSuccess() {
+  handleRegisterSuccess(data) {
     wx.showToast({
       title: '注册成功',
       icon: 'success',
       complete: () => setTimeout(() => wx.navigateBack({ delta: 1 }), 1500)
+    });
+    const chatUrl = getApp().globalData.chatUrl;
+    wx.request({
+      url: `${chatUrl}/api/register`,
+      method: 'POST',
+      data,
+      header: { 'Content-Type': 'application/json' },
+      success: (res) => {
+        if (res.data.code === 1) {
+          console.log('注册成功', res.data.data);
+        } else {
+          console.log('注册失败', res.data.message);
+        }
+      },
+      fail: (err) => {
+        console.log('注册失败', err);
+      }
     });
   },
 

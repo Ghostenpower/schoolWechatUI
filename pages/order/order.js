@@ -17,6 +17,13 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow() {
+    // 刷新订单列表
+    const orderList = this.selectComponent('#orderList');
+    if (orderList) {
+      orderList.refreshOrders();
+    }
+    
+    // 恢复滚动位置
     const pages = getCurrentPages();
     if (pages.length > 1 && pages[pages.length - 1].route.includes('order/order')) {
       if (this.savedScrollPosition > 0) {

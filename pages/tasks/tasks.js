@@ -93,14 +93,6 @@ Page({
     if (!this.data.isConnected) {
       this.setupRealTimeConnection();
     }
-    
-    // 调试输出当前热门任务数据
-    if (this.data.hotTasks && this.data.hotTasks.length > 0) {
-      console.log('当前热门任务数据:', JSON.stringify(this.data.hotTasks));
-      this.data.hotTasks.forEach((task, index) => {
-        console.log(`任务${index+1}价格:`, task.reward, typeof task.reward);
-      });
-    }
   },
 
   /**
@@ -379,7 +371,7 @@ Page({
         console.warn('Null task object encountered');
         return null;
       }
-
+      
       let deadline;
       try {
         // 使用formatDateString确保日期格式兼容iOS
@@ -392,7 +384,7 @@ Page({
         console.error('Error parsing deadline:', e);
         deadline = new Date();
       }
-
+      
       return {
         id: task.taskId,
         type: this.mapTaskType(task.taskType),

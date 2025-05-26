@@ -2,94 +2,143 @@
 
 基于微信小程序开发的校园跑腿服务平台，为校园内的快递代取、外卖代拿等需求提供便捷服务。
 
+## 最近更新
+
+### 2024年3月更新
+- 任务列表API更新：
+  - 更改任务列表API从`/api/tasks/all`到`/api/tasks/getListByStatus`
+  - 新增任务状态和类型过滤功能
+  - 支持分页查询
+  - 优化了iOS设备上的日期解析兼容性
+- 任务大厅优化：
+  - 默认展示3条待接单任务
+  - 新增任务状态切换功能
+  - 支持按类型筛选任务
+- 热门任务展示优化：
+  - 展示2条热门待接单任务
+  - 优化任务排序逻辑
+
 ## 项目结构
 
 ```
 campus_running_group/
 ├── pages/                    # 页面文件夹
+│   ├── address/             # 地址管理
+│   ├── chat/                # 聊天功能
+│   ├── feedback/            # 意见反馈
 │   ├── index/               # 首页
-│   ├── tasks/               # 任务相关页面
-│   │   ├── tasks           # 任务列表
-│   │   ├── publish/        # 发布任务
-│   │   ├── detail/         # 任务详情
-│   │   └── my/             # 我的任务
-│   ├── order/              # 订单相关页面
-│   │   ├── list/           # 订单列表
-│   │   └── detail/         # 订单详情
-│   ├── address/            # 地址相关页面
-│   │   ├── list/           # 地址列表
-│   │   ├── add/            # 新增地址
-│   │   └── edit/           # 编辑地址
-│   ├── profile/            # 个人中心
-│   ├── user/               # 用户相关页面
-│   │   └── info/           # 用户信息
-│   ├── wallet/             # 钱包
-│   ├── feedback/           # 意见反馈
-│   └── settings/           # 设置
-├── components/             # 自定义组件
-├── images/                # 图片资源
-│   ├── icons/            # 图标
-│   └── tabs/             # 底部导航图标
-├── utils/                # 工具函数
-├── app.js               # 小程序入口文件
-├── app.json            # 小程序配置文件
-├── app.wxss            # 全局样式文件
-└── project.config.json # 项目配置文件
+│   ├── login/               # 登录
+│   ├── message/             # 消息中心
+│   ├── order/               # 订单管理
+│   ├── profile/             # 个人中心
+│   ├── register/            # 注册
+│   ├── rider/               # 骑手相关
+│   ├── settings/            # 设置
+│   ├── tasks/               # 任务管理
+│   ├── user/                # 用户管理
+│   └── wallet/              # 钱包
+├── components/              # 自定义组件
+├── images/                  # 图片资源
+├── utils/                   # 工具函数
+├── app.js                   # 小程序入口文件
+├── app.json                 # 小程序配置文件
+└── app.wxss                 # 全局样式文件
+```
+
+## API接口说明
+
+### 任务列表接口
+**接口地址**：`/api/tasks/getListByStatus`  
+**请求方式**：`POST`  
+**数据类型**：`application/x-www-form-urlencoded`
+
+**请求参数**：
+
+| 参数名称 | 参数说明 | 是否必须 | 数据类型 |
+|----------|----------|----------|-----------|
+|taskStatus|任务状态(0-待接单,1-进行中,2-已完成,3-已取消)|是|integer|
+|tasksType|任务类型(-1-全部,0-快递,1-跑腿,2-代购,3-打印,4-其他)|是|integer|
+|pageNum|页码|是|integer|
+|pageSize|每页数量|是|integer|
+
+**响应示例**：
+```javascript
+{
+    "code": 1,
+    "msg": "success",
+    "data": {
+        "total": 100,
+        "list": [
+            {
+                "taskId": 1,
+                "userId": 1001,
+                "title": "帮取快递",
+                "description": "菜鸟驿站有一个快递",
+                "taskType": 0,
+                "status": 0,
+                "price": 5.00,
+                "pickupLocation": "菜鸟驿站",
+                "deadline": "2024-03-21 17:30:00"
+            }
+        ]
+    }
+}
 ```
 
 ## 功能模块
 
-### 任务管理
-- 浏览任务列表
-- 发布新任务
-- 接受任务
-- 查看任务详情
-- 管理我的任务
+### 用户系统
+- 用户注册/登录
+- 个人信息管理
+- 骑手注册认证
+- 消息通知
 
-### 订单管理
-- 查看订单列表
-- 订单详情
-- 订单状态跟踪
+### 任务系统
+- 任务大厅浏览
+- 任务发布管理
+- 任务状态追踪
+- 任务分类筛选
+- 任务搜索功能
 
-### 地址管理
-- 地址列表
-- 新增地址
-- 编辑地址
-- 设置默认地址
+### 订单系统
+- 订单创建处理
+- 订单状态管理
+- 订单评价功能
+- 订单历史记录
 
-### 个人中心
-- 用户信息管理
-- 我的任务
-- 我的订单
-- 我的钱包
-- 地址管理
-- 意见反馈
-- 系统设置
+### 支付系统
+- 余额管理
+- 交易记录
+- 在线支付
+- 提现功能
+
+### 通讯系统
+- 即时消息
+- 系统通知
+- 订单通知
+- 聊天记录
 
 ## 页面路由
 
 | 页面 | 路径 | 说明 |
 |------|------|------|
-| 任务大厅 | /pages/tasks/tasks | 展示所有可接任务 |
+| 首页 | /pages/index/index | 应用首页 |
+| 登录 | /pages/login/login | 用户登录 |
+| 注册 | /pages/register/register | 用户注册 |
+| 任务大厅 | /pages/tasks/tasks | 浏览任务列表 |
 | 发布任务 | /pages/tasks/publish/index | 发布新任务 |
-| 任务详情 | /pages/tasks/detail/index | 查看任务详细信息 |
-| 我的任务 | /pages/tasks/my/index | 查看我发布和接受的任务 |
-| 订单列表 | /pages/order/list/index | 查看所有订单 |
-| 订单详情 | /pages/order/detail/index | 查看订单详细信息 |
-| 地址列表 | /pages/address/list/index | 管理收货地址 |
-| 新增地址 | /pages/address/add/index | 添加新的收货地址 |
-| 编辑地址 | /pages/address/edit/index | 修改已有地址 |
-| 个人中心 | /pages/profile/profile | 用户个人信息中心 |
-| 用户信息 | /pages/user/info/index | 编辑用户信息 |
-| 钱包 | /pages/wallet/wallet | 余额和交易记录 |
-| 意见反馈 | /pages/feedback/feedback | 提交意见反馈 |
-| 设置 | /pages/settings/settings | 系统设置 |
+| 任务详情 | /pages/tasks/detail/index | 查看任务信息 |
+| 我的任务 | /pages/tasks/my/index | 管理个人任务 |
+| 骑手注册 | /pages/rider/register/register | 骑手身份认证 |
+| 个人中心 | /pages/profile/profile | 用户信息中心 |
+| 钱包 | /pages/wallet/wallet | 资金管理 |
+| 消息中心 | /pages/message/message | 消息通知 |
+| 聊天 | /pages/chat/chat | 即时通讯 |
 
 ## 开发环境
 
-- 微信开发者工具
-- Node.js
-- npm/yarn
+- 微信开发者工具（最新版本）
+- Node.js（可选，用于开发环境）
 
 ## 项目配置
 
@@ -98,14 +147,9 @@ campus_running_group/
 git clone [项目地址]
 ```
 
-2. 安装依赖
-```bash
-npm install
-```
+2. 使用微信开发者工具打开项目
 
-3. 使用微信开发者工具打开项目
-
-4. 开发者工具配置
+3. 开发者工具配置
 - 设置服务器域名
 - 配置开发环境
 - 启用 ES6 转 ES5
@@ -128,47 +172,12 @@ npm install
 - 接口调用做好权限验证
 - 用户信息安全存储
 
-## 项目简介
-这是一个面向校园师生的跑腿服务微信小程序，旨在为校园内师生提供便捷的跑腿服务平台。通过这个小程序，用户可以发布跑腿需求、接单赚取收益，实现校园内的互助服务。
-
-## 主要功能
-- 用户登录与认证
-- 发布跑腿订单
-- 接单与配送
-- 订单状态追踪
-- 在线支付功能
-- 用户评价系统
-- 个人中心管理
-
-## 技术栈
-- 前端：原生微信小程序
-- 开发语言：JavaScript/WXML/WXSS
-- 状态管理：小程序原生数据管理
-- 组件：微信小程序内置组件
-
-## 开发环境配置
-1. 确保已安装以下工具：
-   - 微信开发者工具（最新版本）
-   - Node.js (可选，用于包管理)
-
-2. 克隆项目：
-```bash
-git clone [项目地址]
-```
-
-3. 使用微信开发者工具打开项目目录
-
 ## 贡献指南
 1. Fork 本仓库
 2. 创建您的特性分支 (git checkout -b feature/AmazingFeature)
 3. 提交您的更改 (git commit -m 'Add some AmazingFeature')
 4. 推送到分支 (git push origin feature/AmazingFeature)
 5. 开启一个 Pull Request
-
-## 联系方式
-如有任何问题或建议，请通过以下方式联系我们：
-- 项目Issues
-- 电子邮件：[待添加]
 
 ## 许可证
 本项目采用 MIT 许可证 - 详情请参见 [LICENSE](LICENSE) 文件 

@@ -432,6 +432,32 @@ Page({
                         }
                         return task;
                       });
+
+                      // 推送接单消息
+                      const publisherId = this.data.tasks.find(task => task.id === id).userId;
+                      const messageContent = `您的任务已被接单，任务号为${id}`;
+                      const myUserInfo = wx.getStorageSync('userInfo');
+                      const myUserId = myUserInfo ? myUserInfo.userId : null;
+                      console.log('publisherId', publisherId);
+                      console.log('myUserId', myUserId);
+                      const chatUrl = getApp().globalData.chatUrl;
+                      if (publisherId && myUserId) {
+                        wx.request({
+                          url: `${chatUrl}/api/userPushMsgToUser`,
+                          method: 'POST', 
+                          header: {'content-type': 'application/json' },
+                          data: { userId: myUserId.toString(), content: messageContent, otherId: publisherId.toString() },
+                          success: () => {
+                            console.log('推送接单消息成功');
+                          },
+                          fail: () => {
+                            console.error('推送接单消息失败');
+                          }
+                        });
+                      } else {
+                        console.error('推送接单消息失败: 未知的publisherId或myUserId');
+                      }
+                      
                       this.setData({ tasks });
                       wx.showToast({ title: '接单成功', icon: 'success' });
                       wx.setStorageSync('myTaskActiveTab', 'received');

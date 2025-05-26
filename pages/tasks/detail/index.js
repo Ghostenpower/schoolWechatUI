@@ -15,7 +15,7 @@ Page({
     wx.setNavigationBarTitle({
       title: '任务详情'
     })
-    
+
     // 控制显示
     if (options.from === 'published') {
       this.setData({
@@ -41,13 +41,14 @@ Page({
       url: `${baseUrl}/api/tasks/getOneById`,
       method: 'GET',
       data: { taskId },
-      header: { 
+      header: {
         'token': token,
         'content-type': 'application/x-www-form-urlencoded'
       },
       success: (res) => {
         wx.hideLoading();
         if (res.data.code === 1 && res.data.data) {
+          this.setData({ task: res.data.data });
           const found = res.data.data;
           // 映射字段到页面所需格式
           const t = {};
@@ -75,7 +76,7 @@ Page({
             case 4: t.status = 'cancelled'; break;    // 已取消
             default: t.status = 'pending';
           }
-          
+
           t.location = found.pickupLocation || '未指定位置';
           t.destination = found.deliveryLocation || '';
           // 坐标字段
@@ -114,7 +115,7 @@ Page({
           };
           // 备注信息
           t.remark = found.remark || '';
-          
+
           // 获取发布者信息
           wx.request({
             url: `${baseUrl}/api/users/getOneById?userId=${found.userId}`,
@@ -138,9 +139,9 @@ Page({
             }
           });
         } else {
-          wx.showToast({ 
-            title: res.data.msg || '任务不存在', 
-            icon: 'none' 
+          wx.showToast({
+            title: res.data.msg || '任务不存在',
+            icon: 'none'
           });
           this.setData({ loading: false });
         }
@@ -148,9 +149,9 @@ Page({
       fail: (err) => {
         console.error('请求失败:', err);
         wx.hideLoading();
-        wx.showToast({ 
-          title: '网络错误', 
-          icon: 'none' 
+        wx.showToast({
+          title: '网络错误',
+          icon: 'none'
         });
         this.setData({ loading: false });
       }
@@ -194,6 +195,31 @@ Page({
                   data: { taskId, courierId },
                   success: (res) => {
                     console.log('/api/orders/add 响应:', res);
+
+                    const publisherId = this.data.task.userId;
+                    const messageContent = `您的任务已被接单，任务号为${taskId}`;
+                    const chatUrl = app.globalData.chatUrl;
+                    if (myUserId && publisherId) {
+                      wx.request({
+                        url: `${chatUrl}/api/userPushMsgToUser`,
+                        method: 'POST',
+                        header: {'content-type': 'application/json' },
+                        data: { userId: myUserId.toString(), content: messageContent, otherId: publisherId.toString() },
+                        success: (res) => {
+                          if (res.data && res.data.code === 1) {
+                            console.log('推送接单消息成功');
+                          } else {
+                            console.error('推送接单消息失败');
+                          }
+                        },
+                        fail: () => {
+                          console.error('推送接单消息失败');
+                        }
+                      });
+                    } else {
+                      console.error('推送接单消息失败: 未知的publisherId或myUserId');
+                    }
+
                     wx.hideLoading();
                     if (res.data && res.data.code === 1) {
                       wx.showToast({
@@ -248,8 +274,26 @@ Page({
             wx.showToast({ title: '无效的电话号码', icon: 'none' });
           }
         } else if (res.tapIndex === 1) {
-          // 在线联系
-          wx.showToast({ title: '在线联系功能暂未实现', icon: 'none' });
+          const targetUserId = this.data.task.userId;
+          if (!targetUserId) {
+            wx.showToast({
+              title: '用户信息不可用',
+              icon: 'none'
+            });
+            return;
+          }
+
+          // 跳转到聊天详情页面
+          wx.navigateTo({
+            url: `/pages/chat/detail/index?targetId=${targetUserId}&orderId=${this.data.orderId}`,
+            fail: (err) => {
+              console.error('导航到聊天页面失败:', err);
+              wx.showToast({
+                title: '打开聊天失败',
+                icon: 'none'
+              });
+            }
+          });
         }
       },
       fail: err => {
@@ -342,11 +386,11 @@ Page({
         const t = i / N;
         // 二次贝塞尔曲线插值公式
         const lng = (1 - t) * (1 - t) * pickup.longitude +
-                    2 * (1 - t) * t * control.longitude +
-                    t * t * delivery.longitude;
+          2 * (1 - t) * t * control.longitude +
+          t * t * delivery.longitude;
         const lat = (1 - t) * (1 - t) * pickup.latitude +
-                    2 * (1 - t) * t * control.latitude +
-                    t * t * delivery.latitude;
+          2 * (1 - t) * t * control.latitude +
+          t * t * delivery.latitude;
         routePoints.push({ longitude: lng, latitude: lat });
       }
 

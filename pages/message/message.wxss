@@ -2,22 +2,22 @@
 
 /* 页面容器 */
 .container {
-  padding: 20rpx;
-  background: #f5f5f5;
+  padding: 0;
+  background-color: #f5f5f5;
   min-height: 100vh;
 }
 
 /* 消息列表 */
 .message-list {
-  background: #fff;
-  border-radius: 12rpx;
-  padding: 0 20rpx;
+  width: 100%;
 }
 
 .message-item {
   display: flex;
-  padding: 20rpx 0;
-  border-bottom: 1px solid #eee;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  background-color: #fff;
+  border-bottom: 1rpx solid #eee;
 }
 
 .message-item:last-child {
@@ -25,10 +25,10 @@
 }
 
 .avatar {
-  width: 88rpx;
-  height: 88rpx;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
   margin-right: 20rpx;
-  flex-shrink: 0;
 }
 
 .avatar image {
@@ -51,14 +51,80 @@
 
 .text {
   font-size: 28rpx;
-  color: #666;
-  margin-bottom: 8rpx;
+  color: #999;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.right-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 100rpx;
+}
+
 .time {
   font-size: 24rpx;
   color: #999;
+  margin-bottom: 8rpx;
+}
+
+.unread-badge {
+  background-color: #ff4d4f;
+  color: #fff;
+  font-size: 24rpx;
+  height: 36rpx;
+  min-width: 36rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10rpx;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100rpx;
+}
+
+.loading {
+  color: #999;
+  font-size: 28rpx;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx;
+}
+
+.error-message {
+  color: #ff4d4f;
+  font-size: 28rpx;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+.retry-button {
+  font-size: 28rpx;
+  padding: 10rpx 30rpx;
+  background-color: #1890ff;
+  color: #fff;
+  border-radius: 4rpx;
+}
+
+.empty-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400rpx;
+}
+
+.empty-message {
+  color: #999;
+  font-size: 28rpx;
 } 
