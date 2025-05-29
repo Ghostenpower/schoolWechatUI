@@ -159,12 +159,13 @@ Page({
         if (res.data.code === 1) {
           wx.showToast({
             title: '提交成功',
-            icon: 'success'
+            icon: 'success',
+            duration: 2000
           })
           // 延迟返回上一页
           setTimeout(() => {
             wx.navigateBack()
-          }, 1500)
+          }, 2000)
         } else {
           wx.showToast({
             title: res.data.msg || '提交失败',

@@ -80,6 +80,7 @@ Page({
   // 选择任务类型
   selectTaskType(e) {
     const type = parseInt(e.currentTarget.dataset.type);
+    console.log('点击的任务类型值为:', type);
     this.setData({
       taskType: type
     });
@@ -332,7 +333,7 @@ Page({
     // 准备提交数据
     const submitData = {
       taskId: this.data.taskId, // 新增：编辑时带上taskId
-      taskType: this.data.taskType,
+      taskType: this.data.taskType - 1, // 将任务类型数值减1以匹配后端映射
       title: formData.title,
       description: formData.description,
       pickupLocation: formData.pickupLocation,

@@ -7,11 +7,10 @@ Page({
    * 页面的初始数据
    */
   data: {
-    userInfo: {
-      avatarUrl: '',
-      username: '',
-      phone: ''
-    },
+    userInfo: null,
+    loading: true,
+    isRider: false,
+    riderInfo: null,
     hasUserInfo: false,
     stats: {
       orderCount: 0,
@@ -24,16 +23,19 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
-    // 获取用户信息
-    this.getUserInfo()
+    this.fetchUserInfo();
+  },
 
-    // 获取用户统计数据
-    this.getUserStats()
+  onShow() {
+    // 每次页面显示时重新获取用户信息和统计数据
+    this.fetchUserInfo();
+    this.getUserStats();
+    this.checkUserRole(); // 同时检查用户角色
   },
 
   refreshData() {
     // 刷新用户信息和统计数据
-    this.getUserInfo()
+    this.fetchUserInfo()
     this.getUserStats()
     this.checkUserRole()
   },
@@ -46,11 +48,7 @@ Page({
         if (res.confirm) {
           wx.removeStorageSync('userInfo')
           wx.removeStorageSync('token')
-          this.data.userInfo = {
-            avatarUrl: '',
-            username: '',
-            phone: ''
-          }
+          this.data.userInfo = null
           this.hasUserInfo = false
 
           wx.showToast({
@@ -66,45 +64,104 @@ Page({
     })
   },
 
-  getUserInfo() {
-    // 检查是否已经登录
-    let userInfo = wx.getStorageSync('userInfo');
-    if (userInfo) {
-      this.setData({
-        userInfo: {
-          avatarUrl: userInfo.avatarUrl || '/images/default-avatar.png',
-          username: userInfo.username || '未设置',
-          phone: userInfo.phone || '未设置',
-          balance: userInfo.balance || '0.00'
-        },
-        hasUserInfo: true
-      })
-    } else {
-      this.setData({
-        userInfo: {
-          avatarUrl: '',
-          username: '',
-          phone: ''
-        },
-        hasUserInfo: false
-      })
-      console.log('用户未登录或信息不完整')
-    }
-  },
+  // 获取用户信息
+  fetchUserInfo() {
+    const app = getApp();
+    const token = wx.getStorageSync('token');
+    const baseUrl = app.globalData.baseUrl;
+    const userId = wx.getStorageSync('userInfo')?.userId;
 
+    if (!userId) {
+      // 用户未登录或信息不存在
+      this.setData({
+        userInfo: null, // 清空用户信息
+        isRider: false, // 清空骑手状态
+        riderInfo: null, // 清空骑手信息
+        hasUserInfo: false, // 设置为未登录状态
+        loading: false
+      });
+      console.log('用户未登录或信息不完整，已清除页面数据');
+      return;
+    }
+
+    this.setData({ loading: true });
+
+    // 获取用户基本信息
+    wx.request({
+      url: `${baseUrl}/api/users/getOneById`,
+      method: 'GET',
+      data: { userId },
+      header: { 'token': token },
+      success: (res) => {
+        if (res.data && res.data.code === 1 && res.data.data) {
+          const userData = res.data.data;
+          this.setData({
+            userInfo: {
+              avatarUrl: userData.avatarUrl || '/images/default-avatar.png',
+              username: userData.username || `用户${userId}`,
+              phone: userData.phone || '',
+              email: userData.email || '',
+              gender: userData.gender || 0,
+              createTime: userData.createdAt ? userData.createdAt.replace('T', ' ') : ''
+            },
+            hasUserInfo: true
+          });
+        }
+      },
+      complete: () => {
+        this.setData({ loading: false });
+      }
+    });
+
+    // 获取骑手信息
+    wx.request({
+      url: `${baseUrl}/api/couriers/getCourierId`,
+      method: 'GET',
+      header: { 'token': token },
+      success: (res) => {
+        if (res.data && res.data.code === 1 && res.data.data) {
+          const courierId = res.data.data;
+          this.setData({ isRider: true });
+          
+          // 获取骑手详细信息
+          wx.request({
+            url: `${baseUrl}/api/couriers/getOneById`,
+            method: 'GET',
+            data: { courierId },
+            header: { 'token': token },
+            success: (courierRes) => {
+              if (courierRes.data && courierRes.data.code === 1 && courierRes.data.data) {
+                const courierStatus = courierRes.data.data.status;
+                if (courierStatus === 1) {
+                  this.setData({ userRole: '跑腿员' });
+                } else if (courierStatus === 0) {
+                  this.setData({ userRole: '骑手待审核' });
+                } else {
+                  // status 为 2 (审核未通过) 或其他值时，显示普通用户SS
+                  this.setData({ userRole: '普通用户' });
+                }
+              } else {
+                // getOneById 接口调用失败或无数据时，显示普通用户
+                this.setData({ userRole: '普通用户' });
+              }
+            },
+            fail: () => {
+              console.error('获取骑手详细信息失败');
+              this.setData({ userRole: '普通用户' });
+            }
+          });
+        } else {
+          this.setData({ isRider: false, riderInfo: null });
+        }
+      }
+    });
+  },
 
   /**
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady() {
 
-  },
-
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow() {
-    this.refreshData();
   },
 
   /**
